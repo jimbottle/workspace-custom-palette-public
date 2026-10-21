@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=block" />
+<link rel="stylesheet" href="art.css" />
+<style>
+  body { width: 440px; height: 280px; padding: 18px 24px 0; }
+  .mark { font-size: 13px; gap: 8px; }
+  h1 { font-size: 30px; margin: 10px 0 6px; }
+  p { font-size: 13px; line-height: 1.45; }
+  .picker { margin: 12px -8px 0 -8px; padding: 10px 14px 12px; border-radius: 10px 10px 0 0; }
+  .picker .row { gap: 8px; }
+  .picker .dot { width: 18px; height: 18px; }
+  .picker .label { font-size: 9px; margin-bottom: 6px; }
+  .picker .brand { margin: 8px -8px 0; padding: 7px 8px 9px; border-width: 2px; }
+</style></head>
+<body>
+  <div class="mark"><img src="../../icons/icon128.png" width="20" height="20" alt="" />Custom Color Palette</div>
+  <h1>Brand colors, one click.</h1>
+  <p>Inside the native pickers in Google Docs, Sheets, and Slides. For you, or your whole organization.</p>
+  <div class="picker">
+    <div class="row" id="grays"></div>
+    <div class="brand"><div class="label">BRAND</div><div class="row" id="brand"></div></div>
+  </div>
+  <script src="picker.js"></script>
+</body></html>

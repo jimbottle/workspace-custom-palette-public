@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Send feedback - Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides</title>
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <style>
+      /* The hidden ATTRIBUTE must always win. An author display rule (like
+         .switcher { display: flex }) silently defeats the UA's [hidden]
+         { display: none } - author styles beat UA styles regardless of
+         specificity - which made el.hidden = true a no-op on styled
+         containers. That shipped an always-visible org note and an
+         unhideable palette switcher, and jsdom cannot catch it because it
+         does not apply CSS to hidden semantics. This guard is load-bearing;
+         a static test asserts it exists on every page that uses hidden. */
+      [hidden] { display: none !important; }
+      * { box-sizing: border-box; }
+      body {
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg); color: var(--fg); margin: 0 auto; padding: var(--space-6) var(--space-5);
+        max-width: 600px;
+      }
+      .eyebrow { margin-bottom: var(--space-5); }
+      h1 { font-size: 20px; margin: 0 0 var(--space-1); }
+      p.sub { color: var(--muted); margin: 0 0 var(--space-5); max-width: 60ch; }
+
+      fieldset {
+        border: 1px solid var(--border); border-radius: var(--radius);
+        margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4);
+      }
+      legend { color: var(--muted); padding: 0 6px; font-size: 12px; }
+      .types { display: flex; gap: var(--space-5); }
+      .types label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+      input[type="radio"], input[type="checkbox"] { accent-color: var(--accent); }
+
+      label.field { display: block; margin-bottom: 6px; color: var(--muted); font-weight: 600; }
+      textarea {
+        width: 100%; min-height: 130px; font: inherit; padding: var(--space-3);
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); color: var(--fg);
+        resize: vertical; transition: border-color var(--dur) var(--ease);
+      }
+      textarea:hover { border-color: color-mix(in oklab, var(--fg) 22%, transparent); }
+      .hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+
+      details { margin: var(--space-4) 0; }
+      summary { cursor: pointer; color: var(--accent-text); font-weight: 600; }
+      pre {
+        white-space: pre-wrap; word-break: break-word; background: var(--row);
+        border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3);
+        font: 12px/1.5 ui-monospace, Menlo, monospace;
+      }
+
+      .transports { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); align-items: center; }
+      a.btn, button.btn {
+        font: inherit; cursor: pointer; text-decoration: none; text-align: center;
+        border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 14px;
+        background: var(--bg); color: var(--fg);
+        transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                    transform var(--dur) var(--ease);
+      }
+      a.btn:hover, button.btn:hover {
+        background: var(--row); border-color: color-mix(in oklab, var(--fg) 24%, transparent);
+      }
+      a.btn:active, button.btn:active { transform: translateY(1px); }
+      a.btn.primary {
+        background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600;
+      }
+      a.btn.primary:hover { background: color-mix(in oklab, var(--accent) 88%, var(--brand-7)); border-color: transparent; }
+      #copied { color: var(--muted); margin-left: var(--space-1); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="eyebrow brandbar">
+      <span class="brandmark" aria-hidden="true"></span>
+      <span class="wordmark">Custom Color Palette</span>
+    </div>
+    <h1>Send feedback</h1>
+    <p class="sub">
+      Pick a category, write what’s on your mind, then choose how to send. We only
+      attach your extension version, browser, and OS, plus, on bug reports, your
+      browser’s language and the app you optionally tick, nothing else. You stay
+      anonymous; your mail app identifies you.
+    </p>
+
+    <fieldset>
+      <legend>Type</legend>
+      <div class="types" id="types">
+        <label><input type="radio" name="type" value="bug" /> Bug</label>
+        <label><input type="radio" name="type" value="feature" /> Feature</label>
+        <label><input type="radio" name="type" value="feedback" /> Feedback</label>
+      </div>
+    </fieldset>
+
+    <fieldset id="appsWrap" hidden>
+      <legend>Where did it happen? (optional)</legend>
+      <div class="types">
+        <label><input type="checkbox" name="app" value="Docs" /> Docs</label>
+        <label><input type="checkbox" name="app" value="Sheets" /> Sheets</label>
+        <label><input type="checkbox" name="app" value="Slides" /> Slides</label>
+      </div>
+    </fieldset>
+
+    <label class="field" for="description">Your message</label>
+    <textarea id="description" spellcheck="true" aria-label="Your message"
+      placeholder="Describe it in your own words."></textarea>
+    <p class="hint">Attach screenshots after your mail client opens.</p>
+
+    <details id="previewWrap">
+      <summary>Preview what will be sent</summary>
+      <p class="hint">Subject: <span id="subject"></span></p>
+      <pre id="preview"></pre>
+    </details>
+
+    <div class="transports">
+      <a class="btn primary" id="gmail" target="_blank" rel="noopener">Gmail</a>
+      <a class="btn" id="outlook" target="_blank" rel="noopener">Outlook</a>
+      <a class="btn" id="mailto">Default mail app</a>
+      <button class="btn" id="copy" type="button">Copy email address</button>
+      <span id="copied" role="status" aria-live="polite"></span>
+    </div>
+
+    <script type="module" src="feedback.js"></script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+node_modules/
+.user-data/
+.diagnostics/
+test-results/
+playwright-report/

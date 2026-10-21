@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=block" />
+<link rel="stylesheet" href="art.css" />
+<style>
+  body { width: 1400px; height: 560px; display: grid; grid-template-columns: 1fr 480px; align-items: center; padding: 0 80px; gap: 60px; }
+  .copy { display: grid; gap: 22px; }
+  .mark { font-size: 16px; }
+  h1 { font-size: 58px; }
+  p { font-size: 19px; max-width: 560px; }
+</style></head>
+<body>
+  <div class="copy">
+    <div class="mark"><img src="../../icons/icon128.png" width="24" height="24" alt="" />Custom Color Palette</div>
+    <h1>Your brand colors,<br />one click.</h1>
+    <p>A Brand row drops into the native fill, text, and border color menus in Google Docs, Sheets, and Slides. No side panel, no hunting for hex codes.</p>
+    <div class="chips"><span class="chip">Google Docs</span><span class="chip">Sheets</span><span class="chip">Slides</span><span class="chip admin">Roll out to your whole organization</span></div>
+  </div>
+  <div class="picker">
+    <div class="row" id="grays"></div>
+    <div class="brand"><div class="label">BRAND</div><div class="row" id="brand"></div></div>
+    <div class="label">STANDARD</div><div class="row" id="standard"></div>
+  </div>
+  <script src="picker.js"></script>
+</body></html>

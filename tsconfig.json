@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "types": ["node", "chrome"],
+    "resolveJsonModule": true
+  },
+  "include": [
+    "background/**/*.js",
+    "content/**/*.js",
+    "config/**/*.js",
+    "feedback/**/*.js",
+    "lib/**/*.js",
+    "options/**/*.js",
+    "popup/**/*.js",
+    "shared/**/*.js"
+  ],
+  "exclude": ["node_modules", "spike", "dev", "monitor", "service", "tools", "dist"]
+}

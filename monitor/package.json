@@ -1,0 +1,20 @@
+{
+  "name": "brand-palette-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Synthetic monitor: loads the unpacked extension and verifies brand-color injection + apply across Docs/Sheets/Slides on a schedule.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/__tests__/*.test.ts",
+    "monitor": "node --experimental-strip-types src/runner.ts",
+    "remediate": "node --experimental-strip-types src/remediate.ts",
+    "test:pw": "playwright test",
+    "auth": "node --experimental-strip-types src/auth.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^25.0.0",
+    "typescript": "^5.7.0"
+  }
+}

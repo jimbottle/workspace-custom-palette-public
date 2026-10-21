@@ -1,0 +1,11 @@
+{
+  "version": "2026-05-29",
+  "comment": "Packaged fallback palette. Replaced by the remote team palette and/or the user's options-page overrides. Edit names/hex here only as the shipping default.",
+  "swatches": [
+    { "name": "Brand Primary", "hex": "#1A73E8", "order": 0 },
+    { "name": "Brand Accent",  "hex": "#34A853", "order": 1 },
+    { "name": "Brand Warn",    "hex": "#FBBC04", "order": 2 },
+    { "name": "Brand Alert",   "hex": "#EA4335", "order": 3 },
+    { "name": "Brand Ink",     "hex": "#202124", "order": 4 }
+  ]
+}

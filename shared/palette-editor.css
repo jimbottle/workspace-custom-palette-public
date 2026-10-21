@@ -1,0 +1,143 @@
+/*
+ * Styling for the shared palette-editor component (shared/palette-editor.js),
+ * linked by both the options page and the popup so the editor looks identical in
+ * each. Uses the design tokens from theme.css.
+ */
+.bpi-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  margin-bottom: var(--space-2);
+  background: var(--row);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color var(--dur) var(--ease);
+}
+.bpi-row:focus-within { border-color: color-mix(in oklab, var(--accent) 45%, var(--border)); }
+
+.bpi-color {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+}
+.bpi-name,
+.bpi-hex {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--fg);
+  transition: border-color var(--dur) var(--ease);
+}
+.bpi-hex { font-family: ui-monospace, Menlo, monospace; }
+.bpi-name { flex: 1 1 auto; min-width: 0; }
+.bpi-hex { width: 92px; }
+/* Scoped through the wrapper so a host page's element-type rule cannot undo
+   it: the policy builder's `input[type="text"] { padding; font: inherit }`
+   (0,1,1) beat a bare `.bpi-hex` (0,1,0) and ran the text under the copy
+   button in a proportional font (roborev 5489). */
+.bpi-hex-wrap .bpi-hex {
+  padding-left: 6px;
+  padding-right: 18px;
+  font-family: ui-monospace, Menlo, monospace;
+}
+.bpi-hex.invalid { border-color: var(--danger); background: var(--invalid); }
+
+/* The hex field plus its copy button. The wrapper is the flex item; the button
+   sits in the field's right padding, inside the original 92px box: the
+   monospace hex is always seven characters, so its width is fixed and the
+   pages-smoke layout check pins the clearance. */
+.bpi-hex-wrap { position: relative; flex: none; display: inline-flex; }
+.bpi-copy {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 1px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  transition: color var(--dur) var(--ease);
+}
+.bpi-copy:hover,
+.bpi-copy:focus-visible,
+.bpi-copy.copied { color: var(--accent-text); }
+.bpi-copy:disabled { cursor: default; opacity: 0.35; color: var(--muted); }
+.bpi-copy svg { display: block; }
+
+.bpi-reorder { display: flex; flex: none; flex-direction: column; gap: 2px; }
+.bpi-icon {
+  font: 10px/1 inherit;
+  cursor: pointer;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--fg);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.bpi-icon:hover:not(:disabled) {
+  background: var(--row);
+  border-color: color-mix(in oklab, var(--fg) 24%, transparent);
+}
+.bpi-icon:disabled { opacity: 0.4; cursor: default; }
+
+/* Icon-only screen eyedropper (only rendered when the EyeDropper API exists).
+   Same quiet treatment as remove, but hover/focus go accent, not danger. */
+.bpi-pick {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+.bpi-pick:hover,
+.bpi-pick:focus-visible {
+  color: var(--accent-text);
+  background: var(--row);
+  border-color: color-mix(in oklab, var(--accent-text) 35%, transparent);
+}
+.bpi-pick svg { display: block; }
+
+/* Icon-only remove (trash can). The SVG inherits color via currentColor, so the
+   button color drives the glyph: muted at rest, danger on hover/focus. */
+.bpi-remove {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  transition: color var(--dur) var(--ease), background var(--dur) var(--ease),
+              border-color var(--dur) var(--ease);
+}
+.bpi-remove:hover,
+.bpi-remove:focus-visible {
+  color: var(--danger);
+  background: var(--invalid);
+  border-color: color-mix(in oklab, var(--danger) 35%, transparent);
+}
+.bpi-remove svg { display: block; }

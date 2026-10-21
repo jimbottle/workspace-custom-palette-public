@@ -1,0 +1,151 @@
+<!--
+  Sheets DATA VALIDATION dropdown-chip colour picker + its "Customize" dialog.
+  Captured live from docs.google.com 2026-09-01 (bd workspace-custom-palette-gb3)
+  and trimmed: the swatch grids keep 4 cells each instead of 16, and the HSV
+  saturation canvas / hue slider are dropped (the contract never touches them).
+  Every class name, nesting relationship and attribute below is as Google
+  serves it.
+
+  This is a DIFFERENT Closure widget from the toolbar pickers in
+  docs-color-picker.html. It reuses the docs-material-colorpalette markup — so
+  injection is the shared code path — but its custom-colour flow is its own:
+  "Customize" instead of "add a custom color", a goog-menu instead of a
+  gm-dialog, a flat OK button, and Text/Background tabs.
+
+  Three traps are modelled deliberately, because each one silently applies the
+  WRONG colour rather than failing loudly:
+
+  1. TABS REMEMBER THEIR STATE. This fixture is captured with TEXT selected —
+     the state you get after someone edits a text colour and comes back. A
+     brand swatch must still set the BACKGROUND, so the apply path has to
+     select the Background tab (tabs[1]) rather than trusting what is showing.
+
+  2. DOM ORDER DOES NOT TRACK THE SELECTED TAB. The panels are in the opposite
+     order to the tabs: hsv[0] is Background, hsv[1] is Text. With Text
+     selected, the FIRST hex input in the document is the hidden Background
+     one, so an unfiltered dialog.querySelector("input.docs-material-hex-input")
+     returns an invisible field. Writing there leaves OK committing the stale
+     colour, with nothing throwing. `data-test-hidden` marks it (the harness
+     shims getClientRects to report that subtree as not laid out).
+
+  3. THE TWO GRIDS ARE THE SAME SIZE. Live, both COLORS and CUSTOM COLORS
+     render 16 cells, so findMainSwatchCells resolves the tie by document
+     order. Kept as a tie (4 and 4) so a change to that heuristic shows up
+     here as the Brand row moving into CUSTOM COLORS.
+
+  The CUSTOM COLORS cells carry NO aria-label — that is live behaviour too, and
+  it is why findSwatchByHex can never match a registered colour in this picker
+  and why the reopen-and-click apply path is impossible here.
+-->
+<div class="goog-menu goog-menu-vertical previewableColorMenu" role="dialog" aria-label="Colors">
+  <div class="previewableColorMenuHeader">COLORS</div>
+  <div class="docs-material-colorpalette previewableColorMenuColorPalette docs-material-colorpalette-hover" aria-label="Color palette">
+    <table class="docs-material-colorpalette-table" role="grid">
+      <tbody class="docs-material-colorpalette-body">
+        <tr class="docs-material-colorpalette-row" role="row">
+          <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="#e6e6e6, close to light green 5">
+            <div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-border" title="#e6e6e6, close to light green 5" style="background-color: rgb(230, 230, 230)"></div>
+          </td>
+          <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="#ffcfc9, close to light red 3">
+            <div class="docs-material-colorpalette-colorswatch" title="#ffcfc9, close to light red 3" style="background-color: rgb(255, 207, 201)"></div>
+          </td>
+          <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="#ffc8aa, close to light orange 14">
+            <div class="docs-material-colorpalette-colorswatch" title="#ffc8aa, close to light orange 14" style="background-color: rgb(255, 200, 170)"></div>
+          </td>
+          <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="#ffe5a0, close to light yellow 3">
+            <div class="docs-material-colorpalette-colorswatch" title="#ffe5a0, close to light yellow 3" style="background-color: rgb(255, 229, 160)"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="previewableColorMenuHeader">CUSTOM COLORS</div>
+  <div class="docs-material-colorpalette previewableColorMenuColorPalette">
+    <table class="docs-material-colorpalette-table" role="grid">
+      <tbody class="docs-material-colorpalette-body">
+        <tr class="docs-material-colorpalette-row" role="row">
+          <td class="docs-material-colorpalette-cell" role="gridcell">
+            <div class="docs-material-colorpalette-colorswatch" style="background-color: rgb(18, 52, 86)"></div>
+          </td>
+          <td class="docs-material-colorpalette-cell" role="gridcell">
+            <div class="docs-material-colorpalette-colorswatch"></div>
+          </td>
+          <td class="docs-material-colorpalette-cell" role="gridcell">
+            <div class="docs-material-colorpalette-colorswatch"></div>
+          </td>
+          <td class="docs-material-colorpalette-cell" role="gridcell">
+            <div class="docs-material-colorpalette-colorswatch"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="goog-inline-block goog-flat-button previewableColorMenuCustomizeButton" role="button">Customize</div>
+</div>
+
+<div class="goog-menu goog-menu-vertical previewableCustomColorMenu previewableCustomColorMenuContainer previewableCustomColorMenuRgbaEnabled" role="dialog">
+  <div class="docs-dropdown-item-preview-control">
+    <div class="docs-dropdown-item-preview-control-title">Preview</div>
+    <div class="docs-dropdown-item-preview-control-preview">Option 1</div>
+  </div>
+  <div class="goog-menuseparator"></div>
+  <div class="previewableCustomColorMenuTabBar previewableCustomColorMenuTabBarContainer" role="tablist">
+    <div class="docs-tabbar-tab docs-tabbar-tab-selected" role="tab" aria-selected="true" aria-label="Text" data-tooltip="Text">Text</div>
+    <div class="docs-tabbar-tab" role="tab" aria-selected="false" aria-label="Background" data-tooltip="Background">Background</div>
+  </div>
+
+  <!-- Background panel: FIRST in the DOM, but hidden while Text is selected. -->
+  <div class="docs-material-hsv-color-picker docs-material-hsv-color-picker-rgba-enabled" data-test-hidden>
+    <div class="docs-material-hsv-color-picker-information">
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-hsv-color-picker-text">Hex</div>
+        <input type="text" maxlength="7" class="docs-material-hsv-color-picker-input docs-material-hex-input" aria-label="Hex color" value="#123456">
+      </div>
+      <div class="docs-material-hsv-color-picker-rgba-inputs">
+        <div class="docs-material-hsv-color-picker-information docs-material-color-picker-rgba-inputs">
+          <div class="docs-material-color-input-wrapper docs-material-rgba-color-input-wrapper">
+            <div class="docs-material-hsv-color-picker-text">R</div>
+            <input type="text" maxlength="3" class="docs-material-hsv-color-picker-input docs-material-rgba-red-input" aria-label="R" value="18">
+          </div>
+          <div class="docs-material-color-input-wrapper docs-material-rgba-color-input-wrapper">
+            <div class="docs-material-hsv-color-picker-text">G</div>
+            <input type="text" maxlength="3" class="docs-material-hsv-color-picker-input docs-material-rgba-green-input" aria-label="G" value="52">
+          </div>
+          <div class="docs-material-color-input-wrapper docs-material-rgba-color-input-wrapper">
+            <div class="docs-material-hsv-color-picker-text">B</div>
+            <input type="text" maxlength="3" class="docs-material-hsv-color-picker-input docs-material-rgba-blue-input" aria-label="B" value="86">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Text panel: SECOND in the DOM, and the visible one in this capture. -->
+  <div class="docs-material-hsv-color-picker docs-material-hsv-color-picker-rgba-enabled">
+    <div class="docs-material-hsv-color-picker-information">
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-hsv-color-picker-text">Hex</div>
+        <input type="text" maxlength="7" class="docs-material-hsv-color-picker-input docs-material-hex-input" aria-label="Hex color" value="#000000">
+      </div>
+      <div class="docs-material-hsv-color-picker-rgba-inputs">
+        <div class="docs-material-hsv-color-picker-information docs-material-color-picker-rgba-inputs">
+          <div class="docs-material-color-input-wrapper docs-material-rgba-color-input-wrapper">
+            <div class="docs-material-hsv-color-picker-text">R</div>
+            <input type="text" maxlength="3" class="docs-material-hsv-color-picker-input docs-material-rgba-red-input" aria-label="R" value="0">
+          </div>
+          <div class="docs-material-color-input-wrapper docs-material-rgba-color-input-wrapper">
+            <div class="docs-material-hsv-color-picker-text">G</div>
+            <input type="text" maxlength="3" class="docs-material-hsv-color-picker-input docs-material-rgba-green-input" aria-label="G" value="0">
+          </div>
+          <div class="docs-material-color-input-wrapper docs-material-rgba-color-input-wrapper">
+            <div class="docs-material-hsv-color-picker-text">B</div>
+            <input type="text" maxlength="3" class="docs-material-hsv-color-picker-input docs-material-rgba-blue-input" aria-label="B" value="0">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="goog-inline-block goog-flat-button previewableCustomColorMenuCancelButton" role="button">Cancel</div>
+  <div class="goog-inline-block goog-flat-button previewableCustomColorMenuOkayButton" role="button">OK</div>
+</div>

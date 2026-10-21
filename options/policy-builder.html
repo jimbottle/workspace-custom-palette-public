@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Organization palette: policy builder</title>
+<!-- The extension's own tokens and the shared editor's styles. Both resolve on
+     the extension page, where the rows ARE the shared editor. From a file
+     (or a copy mailed without the folders beside it) they simply do not load,
+     and the self-contained rows below use the inline styles that follow. -->
+<link rel="stylesheet" href="../shared/theme.css" />
+<link rel="stylesheet" href="../shared/palette-editor.css" />
+<style>
+  /* The extension's own tokens, inlined rather than linked. This page has to
+     work in two places: opened from Settings inside the extension, and sent to
+     an administrator who has no checkout and no stylesheet. Self-containment is
+     the property that makes the second one possible, so it is not traded away
+     for sharing a file. Values mirror shared/theme.css. */
+  :root {
+    color-scheme: light dark;
+    --bg: oklch(99.3% 0.004 56);
+    --fg: oklch(27.3% 0.017 171);
+    --muted: oklch(51.4% 0.013 90);
+    --line: oklch(91.0% 0.013 71);
+    --field: oklch(100% 0 0);
+    --accent: oklch(51.8% 0.164 38);
+    --warn: oklch(55% 0.16 28);
+    --code: oklch(96.3% 0.007 68);
+    --brand-1: oklch(96.9% 0.013 82); --brand-2: oklch(84.9% 0.066 190);
+    --brand-3: oklch(67.9% 0.212 38); --brand-4: oklch(82.0% 0.159 91);
+    --brand-5: oklch(76.5% 0.089 19);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: oklch(21.5% 0.015 172);
+      --fg: oklch(94.5% 0.008 82);
+      --muted: oklch(72% 0.015 90);
+      --line: oklch(33% 0.02 172);
+      --field: oklch(26% 0.018 172);
+      --accent: oklch(72% 0.17 38);
+      --warn: oklch(72% 0.13 28);
+      --code: oklch(26% 0.018 172);
+    }
+  }
+  /* The same mark the extension wears, so the page reads as part of it. */
+  .brandbar { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; }
+  /* Bigger here than the 18px mark the extension's own pages wear, because on
+     this page it is not decoration: it is the only view of the brand colours
+     as a SET, which is the thing an admin is actually judging while they pick
+     them. A wide chip rather than a square so eight or ten stripes still read.
+     Repainted from the live payload by paintPreview(). */
+  .brandmark {
+    flex: none; width: 68px; height: 34px; border-radius: 9px;
+    background: linear-gradient(90deg,
+      var(--brand-1) 0 20%, var(--brand-2) 20% 40%, var(--brand-3) 40% 60%,
+      var(--brand-4) 60% 80%, var(--brand-5) 80% 100%);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--fg) 14%, transparent);
+  }
+  .brandbar { gap: 12px; }
+  .preview-note { color: var(--muted); font-size: 12.5px; margin: -2px 0 18px 80px; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 64px;
+    background: var(--bg); color: var(--fg);
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 32px 0 8px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; }
+  ol.steps { color: var(--muted); padding-left: 20px; }
+  ol.steps li { margin-bottom: 6px; }
+  /* Sub-steps: tighter than the numbered steps they sit under, so a step that
+     expands into several does not read as a second list of equal weight. */
+  ol.steps ul { margin: 6px 0 0; padding-left: 18px; }
+  ol.steps ul li { margin-bottom: 3px; }
+  ol.steps b { color: var(--fg); }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin: 0 0 16px; }
+  legend { padding: 0 6px; font-weight: 600; }
+  label.opt { display: block; margin: 4px 0; }
+  .palette { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .palette-head { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .palette-head input { flex: 1; }
+  .row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  #import { margin: 0 0 16px; }
+  #import .note { margin-top: 6px; }
+  input[type="text"] {
+    background: var(--field); color: var(--fg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; min-width: 0;
+  }
+  input.cname { flex: 2; }
+  input.chex { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
+  input.chex.bad { border-color: var(--warn); }
+  input[type="color"] {
+    width: 34px; height: 30px; padding: 0; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--field); flex: none;
+  }
+  button {
+    background: var(--field); color: var(--fg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.icon { padding: 4px 9px; flex: none; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  pre {
+    background: var(--code); border: 1px solid var(--line); border-radius: 8px;
+    padding: 14px; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px; margin: 0;
+  }
+  .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  .warn { color: var(--warn); }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1 class="brandbar"><span class="brandmark" id="preview" role="img" aria-label="Preview of the brand colors"></span>Organization palette: policy builder</h1>
+  <p class="preview-note" id="preview-note"></p>
+  <p class="sub">
+    Pick your brand colors here, copy the result, and paste it into the Google
+    Admin console. Nothing is sent anywhere: this page runs entirely in your
+    browser and has no server behind it.
+  </p>
+
+  <fieldset>
+    <legend>What to publish</legend>
+    <label class="opt"><input type="radio" name="mode" value="one" checked /> One palette for everyone</label>
+    <label class="opt"><input type="radio" name="mode" value="many" /> Several named palettes (sub-brands, product lines)</label>
+    <label class="opt" style="margin-top:10px">
+      <input type="checkbox" id="locked" checked />
+      Staff cannot change these colors (recommended)
+    </label>
+    <p class="note" id="lock-note">
+      <b>On is the usual choice</b>, and it is what most administrators expect
+      when they publish brand colors: your colors become the palette staff start
+      on in every picker, and they cannot be edited. Turn it off to publish them
+      as a starting point staff may personalize instead &mdash; useful when
+      teams are trusted to deviate, but it does mean someone can quietly end up
+      off-brand. Either way, palettes staff created themselves are kept, never
+      deleted, and they can still keep their own alongside yours.
+    </p>
+  </fieldset>
+
+  <!-- Only shown when this page can read the extension's storage, which is
+       the case when it is opened from Settings. From a file it stays hidden:
+       absent, not broken. -->
+  <div id="import" hidden>
+    <div class="actions">
+      <button type="button" id="import-palettes">Start from my palettes</button>
+    </div>
+    <p class="note" id="import-note">
+      Brings in every palette from this browser so you do not retype names and
+      hex codes. Your own palettes are only read, never changed.
+    </p>
+  </div>
+
+  <div id="palettes"></div>
+  <div class="actions">
+    <button type="button" id="add-palette" hidden>Add another palette</button>
+  </div>
+
+  <h2>Paste this into &ldquo;Policy for extensions&rdquo; based on the directions below.</h2>
+  <pre id="out">{}</pre>
+  <div class="actions">
+    <button type="button" id="copy">Copy</button>
+  </div>
+  <p class="note" id="problems"></p>
+
+  <h2>Where it goes</h2>
+  <ol class="steps">
+    <li>Sign in to <b>admin.google.com</b> as a Workspace administrator.</li>
+    <li>Go to <b>Devices</b> &rarr; <b>Chrome</b> &rarr; <b>Apps &amp; extensions</b> &rarr; <b>Users &amp; browsers</b>.</li>
+    <li>Select the org unit the staff are in.</li>
+    <li>Click <b>Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides</b> in the list.
+      <ul>
+        <li>A new organization's list is empty, so if it is not there, add it:
+          <ul>
+            <li>Click the <b>yellow + button</b> (bottom right).</li>
+            <li>Choose <b>Add from Chrome Web Store</b>.</li>
+            <li>Search for <b>Custom Color Palette</b>.</li>
+            <li>Click it, then click <b>Select</b>.</li>
+          </ul>
+        </li>
+        <li>Use the Web Store option, <b>not</b> <b>Add Chrome app or extension by ID</b>. That one is for extensions you host yourself and will ask you for an installation URL.</li>
+      </ul>
+    </li>
+    <li>Scroll to <b>Policy for extensions</b>, select whatever is in the box, and paste the above generated text over it.</li>
+    <li>Click <b>SAVE</b>, in the <b>upper right of the settings panel</b>. It is not beside the box you just edited, and nothing takes effect until you click it. The box turns yellow when you edit it and stays yellow after saving, which means "set for this org unit" rather than "unsaved" &mdash; to confirm, reload the page and check your text is still there.</li>
+    <li>Delivery takes a minute or two. On a staff browser, open <b>chrome://policy</b> and click <b>Reload policies</b> to confirm the settings arrived.</li>
+  </ol>
+  <p class="note">
+    Only Workspace administrators can reach that console. That is Google's own
+    access control, and it is why the organization palette is set there rather than
+    inside the extension.
+  </p>
+
+  <footer>
+    Part of Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides.
+  </footer>
+</main>
+
+<script src="policy-builder.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides Privacy Policy</title>
+    <meta name="robots" content="index,follow" />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #202124; background: #ffffff;
+        max-width: 720px; margin: 0 auto; padding: 40px 20px;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { color: #e8eaed; background: #202124; }
+      }
+      h1 { font-size: 28px; margin: 0 0 4px; }
+      h2 { font-size: 18px; margin: 32px 0 8px; }
+      p, li { margin: 8px 0; }
+      ul { padding-left: 22px; }
+      .updated { color: #5f6368; font-size: 14px; margin-top: 40px; }
+      @media (prefers-color-scheme: dark) { .updated { color: #9aa0a6; } }
+    </style>
+  </head>
+  <body>
+    <h1>Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides Privacy Policy</h1>
+
+    <p>Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides is built to collect nothing. This page is the privacy
+    disclosure for the Chrome Web Store listing and for security review.</p>
+
+    <h2>What the extension does</h2>
+    <p>It adds a row of company brand colors inside the native color pickers in
+    Google Docs, Sheets, and Slides. When you click a brand color, it applies that
+    color through Google's own color picker, exactly as if you had picked a built in
+    color. That is the whole product.</p>
+
+    <h2>What it does NOT do</h2>
+    <ul>
+      <li>No analytics. No usage tracking. No crash reporter. No remote telemetry.</li>
+      <li>It never reads, stores, or transmits your document content, the document
+      URL, your cell or text selection, your email address, or anything from your
+      Google account.</li>
+      <li>It does not talk to any Google API. It only touches the color picker pop
+      ups in the page.</li>
+    </ul>
+
+    <h2>The only network request the extension makes</h2>
+    <p>The extension can fetch its configuration (the list of brand colors and the
+    selectors it uses to find Google's pickers) from a company server on a schedule.
+    This is a one way, read only download of configuration data. No information about
+    you, your documents, or your usage is sent in that request or anywhere else. If
+    the server is unreachable, or no server is configured, the extension works from
+    the configuration packaged inside it.</p>
+    <p>In a default install with no company server configured, the extension makes no
+    network requests at all.</p>
+
+    <h2>Permissions and why each is needed</h2>
+    <ul>
+      <li>Access to docs.google.com spreadsheet, document, and presentation pages:
+      required to add the brand colors into the color pickers on those pages. The
+      extension runs only on those pages.</li>
+      <li>Storage: saves your brand palette and your on or off preference so they
+      persist. This stays in your browser (synced by Chrome to your own account if
+      you have sync on); it is never sent to us.</li>
+      <li>Alarms: schedules the periodic configuration refresh described above.</li>
+    </ul>
+
+    <h2>Feedback and bug reports</h2>
+    <p>The Send feedback page composes an email in your own mail app (Gmail, Outlook,
+    or your default client). It attaches only your extension version, browser, and
+    operating system, on a single line, so we can help. It does not attach your email
+    address, your document, or any account data. Nothing is sent until you choose to
+    send the email yourself.</p>
+    <p>If something goes wrong, the extension may show a small in page banner with a
+    Report this link. Nothing is sent automatically; the banner just opens the
+    feedback page if you choose to use it.</p>
+
+    <h2>The monitoring service (operator only)</h2>
+    <p>The company may run a separate automated test that signs in as a dedicated test
+    account and checks that the extension still works. That test runs on company
+    infrastructure against a test account, not on your machine or your data, and is
+    unrelated to your install. It collects nothing about real users.</p>
+
+    <h2>Data retention</h2>
+    <p>There is nothing to retain. The extension holds your palette and preference in
+    your own browser. You can edit or clear them at any time from the options page.</p>
+
+    <p class="updated">Last updated: July 21, 2026</p>
+  </body>
+</html>

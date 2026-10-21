@@ -1,0 +1,13 @@
+{
+  "version": "2026-06-01",
+  "comment": "Packaged fallback palette. Replaced by the remote team palette and/or the user's options-page overrides. Edit names/hex here only as the shipping default.",
+  "swatches": [
+    { "name": "Cloud",    "hex": "#F9F4EB", "order": 0 },
+    { "name": "Sky",      "hex": "#9BDCD7", "order": 1 },
+    { "name": "Poppy",    "hex": "#FE5917", "order": 2 },
+    { "name": "Sunshine", "hex": "#EABF26", "order": 3 },
+    { "name": "Rose",     "hex": "#E69C9C", "order": 4 },
+    { "name": "Grass",    "hex": "#385834", "order": 5 },
+    { "name": "Night",    "hex": "#1A2D27", "order": 6 }
+  ]
+}

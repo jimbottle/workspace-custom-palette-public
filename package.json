@@ -1,0 +1,39 @@
+{
+  "name": "custom-color-palette",
+  "version": "0.2.2",
+  "private": true,
+  "type": "module",
+  "description": "Chrome MV3 extension that injects a brand color palette into the native Google Docs/Sheets/Slides color pickers.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "smoke:pages": "node dev/pages-smoke.mjs",
+    "policy:state": "node dev/policy-state.mjs",
+    "policy:builder": "node dev/open-builder.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:service": "cd service && if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest -q; else python3 -m pytest -q; fi",
+    "test:monitor": "cd monitor && npm test",
+    "typecheck:monitor": "cd monitor && npm run typecheck",
+    "tier2": "npm run lint && npm run typecheck:monitor && npm run test:service && npm run test:monitor",
+    "tier2:setup": "cd monitor && npm install && cd ../service && python3 -m venv .venv && .venv/bin/python -m pip install -q -r requirements-dev.txt",
+    "hooks:install": "bash scripts/hooks/install.sh",
+    "mock-service:start": "node tools/mock-service/server.js",
+    "dev": "node dev/reload-server.mjs",
+    "package": "bash dev/package.sh",
+    "icons": "python3 dev/gen-icons.py",
+    "shots": "node dev/capture-shots.mjs && node dev/render-store-art.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/chrome": "^0.1.42",
+    "@types/jsdom": "^28.0.3",
+    "@types/node": "^25.9.1",
+    "chokidar": "^5.0.0",
+    "eslint": "^10.8.1",
+    "globals": "^17.11.0",
+    "jsdom": "^29.1.1",
+    "typescript": "^5.7.0",
+    "ws": "^8.21.0"
+  }
+}

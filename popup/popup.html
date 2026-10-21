@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides</title>
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <link rel="stylesheet" href="../shared/palette-editor.css" />
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg); color: var(--fg); width: 360px; margin: 0; padding: var(--space-4);
+      }
+      h1.title { margin: 0 0 var(--space-4); }
+
+      /* First-run intro: a soft accent-tinted card that points out the adaptive
+         icon, then gets out of the way for good once dismissed. */
+      .intro {
+        display: flex; gap: var(--space-3); align-items: flex-start;
+        margin: 0 0 var(--space-4); padding: var(--space-3);
+        border: 1px solid color-mix(in oklab, var(--accent) 30%, var(--border));
+        background: color-mix(in oklab, var(--accent) 8%, var(--bg));
+        border-radius: var(--radius);
+      }
+      /* The hidden ATTRIBUTE must always win. An author display rule beats
+         the UA's [hidden]{display:none} regardless of specificity, so any
+         styled container silently ignores el.hidden = true. This exact bug
+         was found once before and patched narrowly (.intro[hidden] only) -
+         then .managed-note and .switcher reintroduced it, shipping an
+         always-visible org note. Global guard; a static test pins it. */
+      [hidden] { display: none !important; }
+      .intro .brandmark { width: 22px; height: 22px; border-radius: var(--radius-sm); }
+      .intro-body { display: flex; flex-direction: column; gap: var(--space-2); }
+      .intro-title { margin: 0; font-weight: 600; }
+      .intro-text { margin: 0; font-size: 13px; color: var(--muted); }
+      .intro-dismiss {
+        align-self: flex-start; margin-top: var(--space-1);
+        background: var(--accent); color: var(--accent-ink);
+        border: 1px solid transparent; font-weight: 600;
+      }
+      .intro-dismiss:hover:not(:disabled) {
+        background: color-mix(in oklab, var(--accent) 88%, var(--brand-7));
+        border-color: transparent;
+      }
+      .intro-actions { display: flex; align-items: center; gap: var(--space-3); }
+      .intro-actions .intro-dismiss { margin-top: 0; }
+
+      .toggle {
+        display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+        padding-bottom: var(--space-3); border-bottom: 1px solid var(--border);
+      }
+      .toggle label { user-select: none; font-weight: 500; }
+
+
+      #rows { max-height: 300px; overflow-y: auto; margin: var(--space-3) 0 var(--space-2); }
+      .actions { display: flex; align-items: center; gap: var(--space-2); }
+      .spacer { flex: 1; }
+
+      button {
+        font: inherit; cursor: pointer; border: 1px solid var(--border);
+        background: var(--bg); color: var(--fg); border-radius: var(--radius-sm); padding: 5px 10px;
+        transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                    transform var(--dur) var(--ease);
+      }
+      button:hover:not(:disabled) {
+        background: var(--row); border-color: color-mix(in oklab, var(--fg) 24%, transparent);
+      }
+      button:active:not(:disabled) { transform: translateY(1px); }
+      button:disabled { opacity: 0.45; cursor: default; }
+      .switcher select {
+        font: inherit; color: var(--fg); background: var(--bg);
+        border: 1px solid var(--border); border-radius: var(--radius-sm);
+        padding: 4px 8px; min-width: 55%; cursor: pointer;
+      }
+      .switcher select:hover { border-color: color-mix(in oklab, var(--fg) 24%, transparent); }
+      .switcher label { font-weight: 600; }
+      .switcher {
+        display: flex; align-items: center; gap: var(--space-2);
+        margin-bottom: var(--space-2); font-size: 12px;
+      }
+      .managed-note {
+        color: var(--muted); font-size: 12px; margin: var(--space-2) 0 0;
+        display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+      }
+      .managed-note button.link { font-size: 12px; }
+      button.icon-text { display: inline-flex; align-items: center; gap: 5px; }
+      button.icon-text svg { flex: none; }
+      #add { color: var(--accent-text); font-weight: 600; }
+
+      #status { color: var(--muted); min-height: 18px; font-size: 12px; margin-top: var(--space-2); }
+
+      footer {
+        margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center; gap: var(--space-4);
+      }
+      a, button.link {
+        color: var(--accent-text); background: none; border: none; padding: 0;
+        font: inherit; cursor: pointer; text-align: left; text-decoration: none;
+      }
+      a:hover, button.link:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <h1 class="title brandbar">
+      <span class="brandmark" aria-hidden="true"></span>
+      <span class="wordmark">Custom Color Palette</span>
+    </h1>
+
+    <!-- Milestone-gated review ask: unhidden by popup.js only when the single
+         banner slot arbitrates to "rating" (see lib/rating.js). -->
+    <div id="rating" class="intro" role="note" hidden>
+      <span class="brandmark" aria-hidden="true"></span>
+      <div class="intro-body">
+        <p class="intro-title">Enjoying Custom Color Palette?</p>
+        <p class="intro-text">
+          A quick review on the Chrome Web Store helps other teams find it.
+        </p>
+        <div class="intro-actions">
+          <button id="rating-rate" class="intro-dismiss">Rate it</button>
+          <button id="rating-dismiss" class="link">No thanks</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Post-update only: unhidden by popup.js when an update stored a notice
+         (lib/update-note.js) that hasn't been dismissed. -->
+    <div id="update-note" class="intro" role="note" hidden>
+      <span class="brandmark" aria-hidden="true"></span>
+      <div class="intro-body">
+        <p class="intro-title">Updated</p>
+        <p class="intro-text" id="update-note-text"></p>
+        <button id="update-note-dismiss" class="intro-dismiss">Got it</button>
+      </div>
+    </div>
+
+    <!-- First-run only: unhidden by popup.js when the intro hasn't been dismissed. -->
+    <div id="intro" class="intro" role="note" hidden>
+      <span class="brandmark" aria-hidden="true"></span>
+      <div class="intro-body">
+        <p class="intro-title">Your toolbar icon wears your colors</p>
+        <p class="intro-text">
+          That little striped icon up in your toolbar paints itself from your
+          first five brand colors, so it refreshes the moment you tweak the
+          palette below. Nice way to spot your brand at a glance.
+        </p>
+        <button id="intro-dismiss" class="intro-dismiss">Got it</button>
+      </div>
+    </div>
+
+    <div class="toggle">
+    </div>
+
+    <!-- Shown by popup.js only when a Workspace admin published an org palette.
+         Editing here saves a personal copy, which stops future admin updates
+         from reaching this user, so the way back has to be visible. -->
+    <p id="managed-note" class="managed-note" role="note" hidden>
+      <span id="managed-note-text">Your organization provides these colors.</span>
+      <button id="managed-reset" class="link">Use organization palette</button>
+    </p>
+
+    <!-- Rendered by popup.js only when planPaletteSwitcher says so. -->
+    <div class="switcher" id="switcher" hidden>
+      <label for="active-palette">Palette</label>
+      <select id="active-palette"></select>
+    </div>
+
+    <div id="rows" aria-label="Palette swatches"></div>
+
+    <div class="actions">
+      <button id="add">+ Add color</button>
+      <span class="spacer"></span>
+      <!-- The circular arrow icons are injected by popup.js (shared/icons.js). -->
+      <button id="undo" class="icon-text" title="Undo">Undo</button>
+      <button id="redo" class="icon-text" title="Redo">Redo</button>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <footer>
+      <button class="link" id="options">Settings</button>
+      <a id="feedback" href="#">Send feedback</a>
+      <a id="report-bug" href="#">Report a bug</a>
+    </footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

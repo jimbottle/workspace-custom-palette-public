@@ -1,0 +1,41 @@
+Custom Color Palette for Google Workspace Docs, Sheets & Slides Privacy Policy
+
+Custom Color Palette for Google Workspace Docs, Sheets & Slides is built to collect nothing. This page is the privacy disclosure for the Chrome Web Store listing and for security review.
+
+What the extension does
+
+It adds a row of company brand colors inside the native color pickers in Google Docs, Sheets, and Slides. When you click a brand color, it applies that color through Google's own color picker, exactly as if you had picked a built in color. That is the whole product.
+
+What it does NOT do
+
+- No analytics. No usage tracking. No crash reporter. No remote telemetry.
+- It never reads, stores, or transmits your document content, the document URL, your cell or text selection, your email address, or anything from your Google account.
+- It does not talk to any Google API. It only touches the color picker pop ups in the page.
+
+The only network request the extension makes
+
+The extension can fetch its configuration (the list of brand colors and the selectors it uses to find Google's pickers) from a company server on a schedule. This is a one way, read only download of configuration data. No information about you, your documents, or your usage is sent in that request or anywhere else. If the server is unreachable, or no server is configured, the extension works from the configuration packaged inside it.
+
+In a default install with no company server configured, the extension makes no network requests at all.
+
+Permissions and why each is needed
+
+- Access to docs.google.com spreadsheet, document, and presentation pages: required to add the brand colors into the color pickers on those pages. The extension runs only on those pages.
+- Storage: saves your brand palette and your on or off preference so they persist. This stays in your browser (synced by Chrome to your own account if you have sync on); it is never sent to us.
+- Alarms: schedules the periodic configuration refresh described above.
+
+Feedback and bug reports
+
+The Send feedback page composes an email in your own mail app (Gmail, Outlook, or your default client). It attaches only your extension version, browser, and operating system, on a single line, so we can help. It does not attach your email address, your document, or any account data. Nothing is sent until you choose to send the email yourself.
+
+If something goes wrong, the extension may show a small in page banner with a Report this link. Nothing is sent automatically; the banner just opens the feedback page if you choose to use it.
+
+The monitoring service (operator only)
+
+The company may run a separate automated test that signs in as a dedicated test account and checks that the extension still works. That test runs on company infrastructure against a test account, not on your machine or your data, and is unrelated to your install. It collects nothing about real users.
+
+Data retention
+
+There is nothing to retain. The extension holds your palette and preference in your own browser. You can edit or clear them at any time from the options page.
+
+Last updated: July 21, 2026

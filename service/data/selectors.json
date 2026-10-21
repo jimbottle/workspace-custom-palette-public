@@ -1,0 +1,84 @@
+{
+  "version": "2026-09-01",
+  "comment": "Packaged fallback DOM contract. Verified live 2026-05-29; sectionLabel and the locale-independent hooks (toolbar button ids, hex/RGB input classes) re-verified live 2026-08-15; the border and table pickers captured live 2026-08-30; the Sheets data-validation dropdown-chip picker captured live 2026-09-01 (see docs/SPEC.md). Slides table cells reuse the slides fill/border buttons, so they need no row of their own. A picker whose widget differs from the shared one carries an `overrides` block; dom-contract resolves the variant from whichever entry point is visible. Every selector here must be locale-independent - an English aria-label breaks non-English UIs. The remote copy at /config/selectors supersedes this when reachable. dom-contract.js is the ONLY consumer.",
+  "shared": {
+    "swatchCell": "td.docs-material-colorpalette-cell[role=\"gridcell\"]",
+    "swatchInner": "div.docs-material-colorpalette-colorswatch",
+    "swatchSelected": ".docs-material-colorpalette-cell-selected",
+    "sectionLabel": ".goog-menuheader, .docs-colormenuitems-custom-header, .previewableColorMenuHeader",
+    "customColorButton": ".docs-customcolorpalette-add-custom-color-button[role=\"button\"]",
+    "customDialog": ".docs-material-gm-dialog.color-dialog",
+    "hexInput": "input.docs-material-hex-input",
+    "redInput": "input.docs-material-rgba-red-input",
+    "greenInput": "input.docs-material-rgba-green-input",
+    "blueInput": "input.docs-material-rgba-blue-input",
+    "okButton": "div[role=\"button\"].docs-material-gm-dialog-call-to-action-button"
+  },
+  "apps": {
+    "sheets": {
+      "pickers": {
+        "fill": {
+          "toolbarButton": "#t-cell-color",
+          "popupRoot": ".goog-menu.docs-colormenuitems"
+        },
+        "text": {
+          "toolbarButton": "#t-text-color",
+          "popupRoot": ".goog-menu.docs-colormenuitems"
+        },
+        "border": {
+          "toolbarButton": "#t-border-color",
+          "popupRoot": ".goog-menu.docs-colormenuitems"
+        },
+        "dataValidationChip": {
+          "comment": "The dropdown-chip colour picker in the Data validation side panel (Data > Data validation > Dropdown > an option's colour chip). A DIFFERENT Closure widget from the toolbar pickers: it reuses docs-material-colorpalette markup (so injection is the shared path) but its custom-colour flow is its own. No toolbarButton: it is opened from a side-panel chip, so the monitor cannot drive it. Captured live 2026-09-01, bd workspace-custom-palette-gb3.",
+          "popupRoot": ".goog-menu.previewableColorMenu",
+          "appliesOnOk": true,
+          "overrides": {
+            "customColorButton": ".previewableColorMenuCustomizeButton[role=\"button\"]",
+            "customDialog": ".goog-menu.previewableCustomColorMenu",
+            "okButton": ".previewableCustomColorMenuOkayButton[role=\"button\"]",
+            "tab": ".previewableCustomColorMenuTabBar .docs-tabbar-tab",
+            "tabSelected": ".docs-tabbar-tab-selected",
+            "tabIndex": 1
+          }
+        }
+      }
+    },
+    "docs": {
+      "pickers": {
+        "text": {
+          "toolbarButton": "#textColorButton",
+          "popupRoot": ".goog-menu.docs-material[role=\"menu\"]"
+        },
+        "highlight": {
+          "toolbarButton": "#bgColorButton",
+          "popupRoot": ".goog-menu.docs-material[role=\"menu\"]"
+        },
+        "tableFill": {
+          "toolbarButton": "#cellColorMenuButton",
+          "popupRoot": ".goog-menu.docs-material[role=\"menu\"]"
+        },
+        "border": {
+          "toolbarButton": "#borderColorMenuButton",
+          "popupRoot": ".goog-menu.docs-material[role=\"menu\"]"
+        }
+      }
+    },
+    "slides": {
+      "pickers": {
+        "fill": {
+          "toolbarButton": "#fillColorMenuButton",
+          "popupRoot": ".goog-menu[role=\"menu\"]"
+        },
+        "border": {
+          "toolbarButton": "#lineColorMenuButton",
+          "popupRoot": ".goog-menu[role=\"menu\"]"
+        },
+        "text": {
+          "toolbarButton": "#textColorButton",
+          "popupRoot": ".goog-menu[role=\"menu\"]"
+        }
+      }
+    }
+  }
+}

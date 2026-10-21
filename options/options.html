@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Custom Color Palette for Google Workspace Docs, Sheets &amp; Slides - Options</title>
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <link rel="stylesheet" href="../shared/palette-editor.css" />
+    <style>
+      /* The hidden ATTRIBUTE must always win. An author display rule (like
+         .switcher { display: flex }) silently defeats the UA's [hidden]
+         { display: none } - author styles beat UA styles regardless of
+         specificity - which made el.hidden = true a no-op on styled
+         containers. That shipped an always-visible org note and an
+         unhideable palette switcher, and jsdom cannot catch it because it
+         does not apply CSS to hidden semantics. This guard is load-bearing;
+         a static test asserts it exists on every page that uses hidden. */
+      [hidden] { display: none !important; }
+      * { box-sizing: border-box; }
+      body {
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg); color: var(--fg);
+        margin: 0 auto; padding: var(--space-6) var(--space-5); max-width: 660px;
+      }
+      .title { margin: 0 0 var(--space-2); }
+      .title .wordmark { font-size: 19px; }
+      p.sub { color: var(--muted); margin: 0 0 var(--space-5); max-width: 60ch; }
+
+      .rule { border: none; border-top: 1px solid var(--border); margin: var(--space-6) 0 var(--space-5); }
+      section > h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; margin: 0 0 var(--space-2); }
+
+      button {
+        font: inherit; cursor: pointer; border: 1px solid var(--border);
+        background: var(--bg); color: var(--fg); border-radius: var(--radius-sm); padding: 6px 12px;
+        transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+                    transform var(--dur) var(--ease);
+      }
+      button:hover:not(:disabled) {
+        background: var(--row); border-color: color-mix(in oklab, var(--fg) 24%, transparent);
+      }
+      button:active:not(:disabled) { transform: translateY(1px); }
+      button:disabled { opacity: 0.45; cursor: default; }
+      button.primary {
+        background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 600;
+      }
+      button.primary:hover:not(:disabled) {
+        background: color-mix(in oklab, var(--accent) 88%, var(--brand-7)); border-color: transparent;
+      }
+      button.link {
+        border: none; background: none; color: var(--accent-text); padding: 6px 4px;
+      }
+      button.link:hover:not(:disabled) { background: none; text-decoration: underline; }
+
+      .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; margin: var(--space-4) 0; align-items: center; }
+      .spacer { flex: 1; }
+      #status { color: var(--muted); min-height: 20px; margin-top: var(--space-2); }
+      #status.error { color: var(--danger); }
+
+      textarea {
+        width: 100%; min-height: 120px; font: 12px/1.5 ui-monospace, Menlo, monospace;
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
+        color: var(--fg); padding: var(--space-3); resize: vertical;
+        transition: border-color var(--dur) var(--ease);
+      }
+      textarea:hover { border-color: color-mix(in oklab, var(--fg) 22%, transparent); }
+      code {
+        font: 12px/1.4 ui-monospace, Menlo, monospace; color: var(--fg);
+        background: var(--row); border: 1px solid var(--border); border-radius: var(--radius-sm);
+        padding: 1px 5px;
+      }
+      details > summary {
+        cursor: pointer; color: var(--accent-text); font-weight: 600;
+        list-style: none; padding: var(--space-1) 0;
+      }
+      details > summary::-webkit-details-marker { display: none; }
+      details > summary::before { content: "▸ "; }
+      details[open] > summary::before { content: "▾ "; }
+
+      .appearance { display: flex; align-items: center; gap: var(--space-3); }
+      /* The Palette line: the chooser (which hides with one palette), the
+         refresh icon (which never hides - one stored palette goes stale
+         exactly as several do) and the trailing note. */
+      .palette-row {
+        display: flex; align-items: center; gap: var(--space-3);
+        margin-bottom: var(--space-4);
+      }
+      .palette-row .sub { margin: 0; flex: 1 1 auto; min-width: 0; }
+      .switcher { display: flex; align-items: center; gap: var(--space-3); }
+      .switcher label { font-weight: 600; }
+      /* Icon-only refresh beside the selector. Same shape as the editor's
+         eyedropper button: muted at rest, accent on hover/focus, so the glyph
+         reads as a control without competing with the selector. */
+      .palette-row button.icon {
+        flex: none; display: inline-flex; align-items: center; justify-content: center;
+        padding: 4px; border: 1px solid transparent; background: none; color: var(--muted);
+        transition: color var(--dur) var(--ease), background var(--dur) var(--ease),
+                    border-color var(--dur) var(--ease);
+      }
+      .palette-row button.icon:hover:not(:disabled),
+      .palette-row button.icon:focus-visible {
+        color: var(--accent-text); background: var(--row);
+        border-color: color-mix(in oklab, var(--accent-text) 35%, transparent);
+      }
+      .palette-row button.icon svg { display: block; }
+      .appearance label { font-weight: 600; }
+      /* A control in one of these rows keeps its natural width. The row is a
+         flex line and its trailing .sub text is greedy, so a multi-word button
+         shrank to the narrowest column that could hold it and wrapped to four
+         lines ("Build / organization / colors"). The label and the control are
+         the fixed parts; the explanation absorbs what is left. */
+      .appearance > button { flex: none; white-space: nowrap; }
+      .appearance > .sub { flex: 1 1 auto; min-width: 0; }
+      select {
+        font: inherit; padding: 6px 10px; border: 1px solid var(--border);
+        border-radius: var(--radius-sm); background: var(--bg); color: var(--fg); cursor: pointer;
+        transition: border-color var(--dur) var(--ease);
+      }
+      select:hover { border-color: color-mix(in oklab, var(--fg) 24%, transparent); }
+
+      footer {
+        margin-top: var(--space-6); padding-top: var(--space-4);
+        border-top: 1px solid var(--border); color: var(--muted);
+      }
+      footer a { color: var(--accent-text); text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <h1 class="title brandbar">
+      <span class="brandmark" aria-hidden="true"></span>
+      <span class="wordmark">Custom Color Palette</span>
+    </h1>
+    <p class="sub">
+      These colors appear as a “Brand” row inside the native color pickers in
+      Google Docs, Sheets, and Slides. Edits apply the next time you open a
+      picker, with no reload needed.
+    </p>
+
+    <!-- Shown by options.js only when a Workspace admin has published an org
+         palette via enterprise policy (config/managed-schema.json). Static text
+         matches the org-only state (no personal palettes yet, so no selector to
+         point at); applyManaged() rewrites it once something of theirs exists. -->
+    <p id="managed-note" class="sub" role="note" hidden>
+      Your organization provides a default palette. You can change these
+      colors for yourself.
+    </p>
+
+    <div class="palette-row">
+      <!-- The chooser is rendered by options.js only when planPaletteSwitcher
+           says so: an enforced org palette, or the user's own opt-in below.
+           One palette and no opt-in looks exactly like it always has. -->
+      <div class="switcher" id="switcher" hidden>
+        <label for="active-palette">Palette</label>
+        <select id="active-palette"></select>
+        <input type="text" id="rename-input" hidden maxlength="40"
+          aria-label="Palette name" />
+      </div>
+      <!-- Re-reads the stored palettes on demand. This page reads them once at
+           mount, so a palette edited in the popup, in another tab or on
+           another signed-in device is stale here until reloaded. Deliberately
+           OUTSIDE #switcher: a single stored palette goes stale the same way,
+           and the chooser hides with one palette (roborev 4634). The glyph is
+           built by options.js (shared/icons.js); the button carries the label. -->
+      <button id="refresh-palettes" class="icon" type="button"
+        aria-label="Refresh palettes" title="Refresh palettes"></button>
+      <span id="switcher-note" class="sub" hidden></span>
+    </div>
+
+    <!-- Visible only while Multiple palettes is opted into (below): org colors
+         alone replace the default palette, and creating a personal one starts
+         at the opt-in. Deliberately OUTSIDE #switcher: with one palette the
+         switcher hides, and this button is how you get to two. -->
+    <button id="new-palette" class="link" hidden>New palette</button>
+    <button id="rename-palette" class="link" hidden>Rename palette</button>
+    <button id="delete-palette" class="link" hidden>Delete palette</button>
+
+    <div id="rows" aria-label="Palette swatches"></div>
+
+    <div class="actions">
+      <button id="add">+ Add color</button>
+      <div class="spacer"></div>
+      <button id="reset" class="link">Reset</button>
+      <button id="save" class="primary">Save</button>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <hr class="rule" />
+
+    <section>
+      <details>
+        <summary>Import / export</summary>
+        <p class="sub">
+          One color per line, name then hex, like
+          <code>Brand Blue #1A73E8</code>. Paste a list to import, or copy the
+          current palette to share. With Multiple palettes on, importing makes
+          a new palette and switches to it, so nothing you already have is
+          replaced.
+        </p>
+        <textarea id="text" spellcheck="false" placeholder="Brand Blue #1A73E8&#10;Brand Red #D93025"
+          aria-label="Palette colors, one per line"></textarea>
+        <div class="actions">
+          <button id="export">Copy current palette</button>
+          <button id="import">Import from box</button>
+        </div>
+      </details>
+    </section>
+
+
+
+    <section class="appearance">
+      <label for="multi-palette">Multiple palettes</label>
+      <input type="checkbox" id="multi-palette" />
+      <span class="sub" id="multi-palette-note">
+        Keep more than one palette and switch between them.
+      </span>
+    </section>
+
+    <section class="appearance">
+      <label for="theme">Appearance</label>
+      <select id="theme" aria-label="Theme">
+        <option value="system">System default</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </section>
+
+    <!-- Admin-only, and deliberately last and low-key: publishing colors for a
+         whole organization is something a Workspace administrator does once,
+         not something the people using the palette ever need. It is a link
+         rather than a hidden page because an admin setting this up for the
+         FIRST time has no policy yet, so there is nothing to reveal it. -->
+    <section class="appearance">
+      <label>Administrators</label>
+      <button id="policy-builder" class="link" type="button">Build organization palette</button>
+      <span class="sub">
+        Publishing brand colors to a Workspace domain? This builds the settings
+        to paste into the Google Admin console. You need to be an administrator.
+      </span>
+    </section>
+
+    <footer>
+      <!-- No whitespace between these: the separators are the only spacing, so
+           a stray newline collapsing to a space makes one gap wider than the
+           other. #version is filled by options.js from the manifest and carries
+           its own leading separator, so nothing dangles if the fill never runs. -->
+      <a id="feedback" href="#">Send feedback</a>&nbsp;·&nbsp;<a
+        id="report-bug" href="#">Report a bug</a><span id="version"></span>
+    </footer>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

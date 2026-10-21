@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Brand Palette Injector — SPIKE (throwaway)",
+  "version": "0.0.0",
+  "description": "Phase 0 feasibility spike: captures the Google color-picker DOM and tests the inject + custom-color apply loop in Sheets. NOT for distribution.",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://docs.google.com/spreadsheets/*",
+        "https://docs.google.com/document/*",
+        "https://docs.google.com/presentation/*"
+      ],
+      "js": ["capture.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

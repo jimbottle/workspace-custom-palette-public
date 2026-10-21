@@ -1,0 +1,147 @@
+/*
+ * Design tokens + shared chrome for the extension's own pages (options, popup,
+ * feedback). See DESIGN.md for the system. Light is the default; dark applies
+ * (a) BEFORE theme.js runs, when the OS prefers dark and no explicit theme is
+ * set, and (b) when theme.js sets <html data-theme="dark">. A saved
+ * "light"/"dark" overrides the OS; "system" follows it. Colors are authored in
+ * OKLCH and verified WCAG AA (see PRODUCT.md). The injected "Brand" row inside
+ * Google's picker is NOT themed here; Google styles it.
+ */
+:root {
+  color-scheme: light dark;
+
+  /* Brand palette (also the packaged default) - drives the brand mark. */
+  --brand-1: oklch(96.9% 0.013 82);   /* Cloud    */
+  --brand-2: oklch(84.9% 0.066 190);  /* Sky      */
+  --brand-3: oklch(67.9% 0.212 38);   /* Poppy    */
+  --brand-4: oklch(82.0% 0.159 91);   /* Sunshine */
+  --brand-5: oklch(76.5% 0.089 19);   /* Rose     */
+  --brand-6: oklch(42.5% 0.069 142);  /* Grass    */
+  --brand-7: oklch(27.9% 0.027 172);  /* Night    */
+
+  /* Neutrals, warm-tinted (no pure #fff / #000). */
+  --bg: oklch(99.3% 0.004 56);
+  --fg: oklch(27.3% 0.017 171);
+  --muted: oklch(51.4% 0.013 90);
+  --border: oklch(91.0% 0.013 71);
+  --row: oklch(96.3% 0.007 68);
+
+  /* Accent: Poppy is a FILL only; text/links on --bg use --accent-text. */
+  --accent: oklch(67.9% 0.212 38);        /* Poppy fill            */
+  --accent-ink: oklch(27.9% 0.027 172);   /* Night text on Poppy   */
+  --accent-text: oklch(51.8% 0.164 38);   /* deepened Poppy: links */
+
+  --danger: oklch(55% 0.16 28);
+  --invalid: oklch(94% 0.04 28);
+
+  --ring: color-mix(in oklab, var(--accent-text) 32%, transparent);
+
+  /* Spacing scale + shape + motion. */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px;
+  --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --radius-sm: 6px; --radius: 8px; --radius-lg: 12px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 160ms;
+}
+
+/* Pre-JS: follow the OS until theme.js sets a concrete data-theme (no flash for
+   system users). theme.js always sets data-theme afterward, so this stops. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: oklch(23.4% 0.021 169);
+    --fg: oklch(93.0% 0.012 80);
+    --muted: oklch(74.1% 0.024 160);
+    --border: oklch(36.2% 0.031 166);
+    --row: oklch(28.8% 0.026 167);
+    --accent-text: oklch(78.6% 0.141 53);
+    --danger: oklch(72% 0.13 30);
+    --invalid: oklch(32% 0.06 28);
+  }
+}
+
+/* Resolved by theme.js (incl. a manual Light/Dark override). data-theme="light"
+   falls through to the :root light defaults. color-scheme is pinned to the
+   resolved theme so UA chrome (scrollbars, <select> popups, controls, autofill)
+   follows the override instead of the OS. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(23.4% 0.021 169);
+  --fg: oklch(93.0% 0.012 80);
+  --muted: oklch(74.1% 0.024 160);
+  --border: oklch(36.2% 0.031 166);
+  --row: oklch(28.8% 0.026 167);
+  --accent-text: oklch(78.6% 0.141 53);
+  --danger: oklch(72% 0.13 30);
+  --invalid: oklch(32% 0.06 28);
+}
+
+/* ---- Shared chrome ------------------------------------------------------- */
+
+/* Brand mark: hard-stop VERTICAL stripes of the brand colors, the same mark the
+   toolbar icon paints. shared/brandmark.js overrides --brandmark-image with the
+   LIVE palette once a page has resolved one; the packaged gradient below is the
+   fallback, so a page that never resolves one looks exactly as it always did.
+   Vertical (90deg) on purpose: the toolbar icon and the packaged PNG are both
+   vertical, and this used to be the odd one out at 180deg. */
+.brandbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.brandmark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--brandmark-image, linear-gradient(
+    90deg,
+    var(--brand-1) 0 14.3%, var(--brand-2) 14.3% 28.6%, var(--brand-3) 28.6% 42.9%,
+    var(--brand-4) 42.9% 57.1%, var(--brand-5) 57.1% 71.4%, var(--brand-6) 71.4% 85.7%,
+    var(--brand-7) 85.7% 100%
+  ));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--fg) 14%, transparent);
+}
+.wordmark {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+}
+
+/* Error notice (shared/page-errors.js): background-worker or page errors
+   surfaced locally with a "Report this" link, per the feedback standard. */
+.error-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in oklab, var(--danger) 45%, var(--border));
+  background: color-mix(in oklab, var(--danger) 8%, var(--bg));
+  border-radius: var(--radius);
+}
+.error-notice p { margin: 0; font-size: 13px; }
+.error-notice-actions { display: flex; gap: var(--space-2); flex: none; }
+.error-notice button {
+  font: inherit; font-size: 13px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg); color: var(--fg);
+  border-radius: var(--radius-sm); padding: 4px 10px;
+}
+.error-notice button.error-notice-report { color: var(--accent-text); font-weight: 600; }
+
+/* One visible focus treatment for every interactive element. The box-shadow ring
+   follows each element's own border-radius, so we don't override it here. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

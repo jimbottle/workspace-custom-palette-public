@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Tracked pre-commit hook (Tier 1). .git/hooks/pre-commit is a symlink to this
+# file (see scripts/hooks/install.sh). Runs typecheck + unit tests.
+#
+# - File-filtered: skips entirely when no JS/TS/JSON is staged (docs-only commits
+#   shouldn't run the toolchain).
+# - Graceful fallback: if the toolchain isn't bootstrapped, warn and exit 0
+#   rather than hard-fail (a hook that blocks gets bypassed, and then nothing
+#   runs). Fix the bootstrap, don't make --no-verify a habit.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+# Only run when relevant files are staged.
+if ! git diff --cached --name-only --diff-filter=ACM \
+  | grep -Eq '\.(js|ts|json)$'; then
+  exit 0
+fi
+
+if [ ! -d node_modules ]; then
+  echo "pre-commit: node_modules missing — run 'npm install'. Skipping checks." >&2
+  exit 0
+fi
+
+echo "pre-commit: typecheck…"
+npm run --silent typecheck
+
+echo "pre-commit: tests…"
+npm test --silent
+
+echo "pre-commit: ok"

@@ -1,0 +1,53 @@
+/* Shared look for the rendered store art (promo tiles, the organization
+   screenshots). Rendered by dev/render-store-art.mjs at exact pixel sizes.
+   Product name on every tile is "Custom Color Palette" (STORE_LISTING.md). */
+:root {
+  --bg: #16211d;
+  --fg: #efe8dc;
+  --muted: #a6b0aa;
+  --line: #2c3a34;
+  --accent: #fe5917;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  overflow: hidden;
+}
+.mark { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.mark img { display: block; border-radius: 5px; }
+h1 { margin: 0; font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; }
+p { margin: 0; color: var(--muted); line-height: 1.5; }
+.chips { display: flex; gap: 10px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 15px; }
+.chip.admin { border-color: color-mix(in oklab, var(--accent) 70%, transparent); color: #ffb08f; }
+
+/* A Google-style color picker, Brand row boxed. */
+.picker {
+  background: #fff; border-radius: 12px; padding: 22px 24px;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+  color: #3c4043;
+}
+.picker .label { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; margin: 0 0 9px; color: #5f6368; }
+.picker .row { display: flex; gap: 11px; }
+.picker .dot { width: 32px; height: 32px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+.picker .brand { border: 2.5px solid var(--accent); border-radius: 10px; padding: 12px 12px 14px; margin: 14px -14px; }
+
+/* Screenshot layout: copy left, real page capture right. */
+.shot { width: 1280px; height: 800px; display: grid; grid-template-columns: 420px 1fr; gap: 56px; align-items: center; padding: 0 52px; }
+.shot .copy { display: grid; gap: 18px; }
+.shot .copy .mark { font-size: 14px; }
+.shot h1 { font-size: 40px; }
+.shot p { font-size: 17px; }
+.shot .frame {
+  border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+  max-height: 704px; position: relative; box-shadow: 0 18px 50px rgb(0 0 0 / 0.35);
+}
+.shot .frame img { display: block; width: 100%; }
+.shot .frame.fade::after {
+  content: ""; position: absolute; inset: auto 0 0 0; height: 110px;
+  background: linear-gradient(transparent, var(--page-bg, #16211d));
+}
+/* The toolbar panel is a narrow page; show it near its real width. */
+.shot .frame.narrow { width: 340px; justify-self: center; }

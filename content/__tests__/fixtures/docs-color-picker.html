@@ -1,0 +1,150 @@
+<!--
+  Docs text-color picker + custom-color dialog, captured live from
+  docs.google.com/document on 2026-08-16 (English UI, a Workspace account).
+
+  WHAT IS FAITHFUL (read off the live DOM, do not "tidy" it):
+    - every class name, role, and the parent/child nesting
+    - the swatch cell -> inner swatch relationship, and that the INNER div is
+      the one carrying title=<color name>
+    - MODELED FROM OBSERVED ATTRIBUTES: the two table-toolset buttons in
+      #docs-toolbar (#cellColorMenuButton, #borderColorMenuButton). Their ids,
+      classes, role and aria-labels were read off the live DOM on 2026-08-30;
+      their nesting here is ours. They pin the docs.tableFill / docs.border
+      contract entries against the same locale scan as everything else.
+    - MODELED, NOT OBSERVED: the `data-tooltip` attributes on the first cell and
+      its inner swatch. The live Docs capture showed `title` only. They are
+      modeled here because injector.js has a dedicated branch rewriting
+      `data-tooltip` on the clone and monitor/src/check.ts treats it as an
+      independent tooltip source ("Google's own tooltip layer reads it"), and
+      without them that branch had no Tier 1 coverage at all - deleting it left
+      the whole locale suite green. If a live capture ever shows Google does not
+      use `data-tooltip` on swatch cells, delete the branch and these attributes
+      together, not just one of them.
+    - the FIRST main-grid cell is marked selected (class ...-cell-selected +
+      aria-selected="true"), as Google marks whichever colour is currently
+      applied. That cell is also injectBrandRow's clone source, which is what
+      made every Brand swatch inherit a checkmark (bug -auq). Do not "clean"
+      this up: it is the state the regression test needs.
+    - the add-custom-color button sitting inside a td.docs-material-colorpalette-cell
+    - the section header class (.docs-colormenuitems-custom-header) Docs uses
+      INSTEAD of the .goog-menuheader that Sheets/Slides have
+    - the dialog's input classes and their English aria-labels, exactly as live:
+      hex "Hex color", then "R"/"G"/"B" - these are the strings that DO get
+      translated, which is the whole point of locale-fixture.test.js
+    - the OK button carrying .docs-material-gm-dialog-call-to-action-button
+
+  WHAT IS TRIMMED OR SYNTHESIZED (never assert on these as if they were live):
+    - the main grid is trimmed to 12 cells (live: 80) and the custom grid to 3
+      (live: 10). Only the RELATIVE sizes matter - findMainSwatchCells picks the
+      largest grid, so main must stay bigger than custom.
+    - the HSV saturation/hue sliders are collapsed to one placeholder node
+    - the second, HIDDEN dialog at the bottom is synthesized. Google really does
+      retain a cached dialog after first use (see dom-contract.findCustomDialog),
+      but only one existed at capture time, so this models the documented
+      behavior rather than reproducing a captured node. data-test-hidden is OUR
+      marker: the test's getClientRects shim reads it to fake "not laid out".
+-->
+<div id="docs-toolbar">
+  <div id="textColorButton" class="docs-textcolormenubutton goog-toolbar-menu-button" role="button" aria-label="Text color" aria-expanded="true"></div>
+  <div id="bgColorButton" class="docs-textcolormenubutton goog-toolbar-menu-button" role="button" aria-label="Highlight color" aria-expanded="false"></div>
+  <!-- The table toolset. MODELED from attributes read off the live DOM on
+       2026-08-30 (ids, classes, role, aria-label; the nesting is ours): these
+       buttons exist only while a table cell is selected and sit in the
+       .docs-toolbar-more-toolbar strip, which overflows behind #moreButton on a
+       narrow window. The ids are what the contract keys on. -->
+  <div class="goog-toolbar docs-toolbar-more-toolbar">
+    <div id="cellColorMenuButton" class="docs-toolbar-color-menu-button goog-toolbar-menu-button goog-toolbar-color-menu-button" role="button" aria-label="Background color" aria-expanded="false"></div>
+    <div id="borderColorMenuButton" class="docs-toolbar-color-menu-button goog-toolbar-menu-button goog-toolbar-color-menu-button" role="button" aria-label="Border color" aria-expanded="false"></div>
+  </div>
+</div>
+
+<div class="goog-menu goog-menu-vertical docs-colormenuitems docs-material goog-menu-noaccel" role="menu">
+  <table class="docs-material-colorpalette-table" role="grid">
+    <tbody>
+      <tr class="docs-material-colorpalette-row" role="row">
+        <td class="docs-material-colorpalette-cell docs-material-colorpalette-cell-selected" role="gridcell" aria-selected="true" aria-label="black" data-tooltip="black"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="black" data-tooltip="black"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="dark grey 4"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="dark grey 4"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="dark grey 3"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="dark grey 3"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="dark grey 2"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="dark grey 2"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="dark grey 1"><div class="docs-material-colorpalette-colorswatch" title="dark grey 1"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="grey"><div class="docs-material-colorpalette-colorswatch" title="grey"></div></td>
+      </tr>
+      <tr class="docs-material-colorpalette-row" role="row">
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="red berry"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="red berry"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="red"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="red"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="orange"><div class="docs-material-colorpalette-colorswatch" title="orange"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="yellow"><div class="docs-material-colorpalette-colorswatch" title="yellow"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="green"><div class="docs-material-colorpalette-colorswatch" title="green"></div></td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="cyan"><div class="docs-material-colorpalette-colorswatch" title="cyan"></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="docs-colormenuitems-custom-header">Custom</div>
+
+  <table class="docs-material-colorpalette-table" role="grid">
+    <tbody>
+      <tr class="docs-material-colorpalette-row" role="row">
+        <td class="docs-material-colorpalette-cell">
+          <div class="docs-customcolorpalette-add-custom-color-button" role="button" aria-label="Add a custom color"></div>
+        </td>
+        <td class="docs-material-colorpalette-cell">
+          <div class="docs-customcolorpalette-eyedropper-button" role="button" aria-label="Eyedropper"></div>
+        </td>
+        <td class="docs-material-colorpalette-cell" role="gridcell" aria-label="Custom Color #1a73e8, close to dark cornflower blue 1"><div class="docs-material-colorpalette-colorswatch docs-material-colorpalette-colorswatch-dark" title="Custom Color #1a73e8"></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="docs-material-gm-dialog color-dialog" role="dialog">
+  <div class="docs-material-gm-dialog-title">
+    <span class="docs-material-gm-dialog-title-text" role="heading">Custom</span>
+    <span class="docs-material-gm-dialog-title-close" role="button" aria-label="Close"></span>
+  </div>
+  <div class="docs-material-gm-dialog-content">
+    <div class="docs-material-hsv-color-picker docs-material-hsv-color-picker-rgba-enabled">
+      <div class="docs-material-hsv-color-picker-saturation-value">
+        <div class="docs-material-color-picker-saturation-value" role="slider" aria-label="Saturation and value"></div>
+      </div>
+      <div class="docs-material-hsv-color-picker-swatch-slider-wrapper">
+        <div class="docs-material-color-picker-hue" role="slider" aria-label="Hue"></div>
+      </div>
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-color-input-label">Hex</div>
+        <input class="docs-material-hsv-color-picker-input docs-material-hex-input" aria-label="Hex color" value="#ff0000">
+      </div>
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-color-input-label">R</div>
+        <input class="docs-material-hsv-color-picker-input docs-material-rgba-red-input" aria-label="R" value="255">
+      </div>
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-color-input-label">G</div>
+        <input class="docs-material-hsv-color-picker-input docs-material-rgba-green-input" aria-label="G" value="0">
+      </div>
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-color-input-label">B</div>
+        <input class="docs-material-hsv-color-picker-input docs-material-rgba-blue-input" aria-label="B" value="0">
+      </div>
+      <div class="docs-material-color-input-wrapper">
+        <div class="docs-material-color-input-label">A</div>
+        <input class="docs-material-hsv-color-picker-input docs-material-rgba-alpha-input" aria-label="A" value="100">
+      </div>
+    </div>
+  </div>
+  <div class="docs-material-gm-dialog-buttons">
+    <div class="docs-material-button-hairline-primary docs-material-button" role="button">Cancel</div>
+    <div class="docs-material-button-fill-primary docs-material-button docs-material-gm-dialog-call-to-action-button" role="button">OK</div>
+  </div>
+</div>
+
+<div class="docs-material-gm-dialog color-dialog" role="dialog" data-test-hidden="1">
+  <div class="docs-material-gm-dialog-content">
+    <div class="docs-material-color-input-wrapper">
+      <input class="docs-material-hsv-color-picker-input docs-material-hex-input" aria-label="Hex color" value="#000000">
+    </div>
+  </div>
+  <div class="docs-material-gm-dialog-buttons">
+    <div class="docs-material-button-fill-primary docs-material-button docs-material-gm-dialog-call-to-action-button" role="button">OK</div>
+  </div>
+</div>

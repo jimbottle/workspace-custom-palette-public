@@ -1,0 +1,79 @@
+{
+  "title": "Custom Color Palette policies",
+  "description": "Settings a Workspace admin can push to staff. See docs/DEPLOY.md for the Admin console runbook.",
+  "type": "object",
+  "properties": {
+    "palette": {
+      "title": "Organization brand palette",
+      "description": "Default brand colors for everyone in the organization. Each user can still personalize their own palette; this is the default they start from.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Color name",
+            "description": "Shown on the swatch tooltip, e.g. Poppy.",
+            "type": "string"
+          },
+          "hex": {
+            "title": "Hex value",
+            "description": "Six-digit hex color, e.g. #FE5917.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "hex"
+        ]
+      }
+    },
+    "palettes": {
+      "title": "Organization brand palettes",
+      "description": "Several named palettes for the organization, when one is not enough (sub-brands, product lines). Staff start on the first. Takes precedence over the single 'palette' setting, which stays supported so existing deployments keep working.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "Palette name",
+            "description": "Shown when choosing between palettes, e.g. Retail or Wholesale.",
+            "type": "string"
+          },
+          "swatches": {
+            "title": "Colors in this palette",
+            "description": "The brand colors, same shape as the single 'palette' setting.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "title": "Color name",
+                  "description": "Shown on the swatch tooltip, e.g. Poppy.",
+                  "type": "string"
+                },
+                "hex": {
+                  "title": "Hex value",
+                  "description": "Six-digit hex color, e.g. #FE5917.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "hex"
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "swatches"
+        ]
+      }
+    },
+    "paletteLocked": {
+      "title": "Enforce the organization palette",
+      "description": "When true, staff see the organization palette and cannot change it. Leave unset (or false) to let each person personalize their own colors, which is the default behavior. Has no effect unless a palette is also set.",
+      "type": "boolean"
+    }
+  }
+}
