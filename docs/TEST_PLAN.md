@@ -315,10 +315,25 @@ account, then:
 - [ ] **Slides**: select a shape → Fill color → Brand label + row present →
       tooltips show brand names → click a brand color → the shape fills that
       color.
+- [ ] **A swatch named by its hex, and one of Google's own colours** (0.2.3,
+      bd `workspace-custom-palette-ox4`). Use a palette holding a swatch whose
+      NAME is its hex (import a bare `#1A73E8` line) and one that equals a
+      colour in Google's main grid (`#FF0000` or `#000000`). In each app, each
+      applies, no "couldn't be applied" message appears, and the picker closes.
+      The default palette has neither kind, and the monitor clicks the default
+      palette, so this is the only tier that covers them. On 0.2.2 the first
+      applied nothing, silently, and the second applied and then bannered on
+      every click.
 - [ ] **Options**: edit the palette (add/rename/reorder/remove + hex validation),
       Save → reopen a picker → the change shows with no reload. **Import** with
-      Multiple palettes on creates a NEW palette and switches to it, leaving the
-      one you were on untouched; **Export** copies the active palette out.
+      Multiple palettes on asks for a name (Enter accepts the suggestion,
+      Cancel creates nothing), then creates a NEW palette and switches to it,
+      leaving the one you were on untouched. The button is there with an
+      enforced organization palette on screen too. Opening **Import / export** shows the palette
+      on screen in the box; **Copy current palette** puts it on the clipboard
+      (paste it somewhere to check: no automated tier exercises the real
+      clipboard); **Import as new palette** on that untouched text is refused with
+      "Nothing new to import".
 - [ ] **Multiple palettes** (0.2.0): the opt-in is already checked on a fresh
       profile. Create a second palette, rename it, switch between them — an
       already-open Doc tab and the toolbar icon both follow on the next picker

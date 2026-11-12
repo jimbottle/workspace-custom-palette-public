@@ -187,20 +187,29 @@
     <hr class="rule" />
 
     <section>
-      <details>
+      <details id="io">
         <summary>Import / export</summary>
         <p class="sub">
           One color per line, name then hex, like
           <code>Brand Blue #1A73E8</code>. Paste a list to import, or copy the
           current palette to share. With Multiple palettes on, importing makes
-          a new palette and switches to it, so nothing you already have is
-          replaced.
+          a new palette that you name and switches to it, so nothing you
+          already have is replaced.
         </p>
         <textarea id="text" spellcheck="false" placeholder="Brand Blue #1A73E8&#10;Brand Red #D93025"
           aria-label="Palette colors, one per line"></textarea>
         <div class="actions">
           <button id="export">Copy current palette</button>
           <button id="import">Import from box</button>
+        </div>
+        <!-- The name step of an import-as-new, revealed by options.js after
+             Import is clicked with Multiple palettes on. Inline like rename:
+             no dialogs on this page. -->
+        <div class="actions" id="import-name-row" hidden>
+          <label for="import-name">Name the new palette</label>
+          <input type="text" id="import-name" maxlength="40" />
+          <button id="import-create" class="primary">Create palette</button>
+          <button id="import-cancel" class="link">Cancel</button>
         </div>
       </details>
     </section>

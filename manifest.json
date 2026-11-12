@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Custom Color Palette for Google Workspace Docs, Sheets & Slides",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6+D7ZJVkOXaP7/PL53/6fkj7UhbJjzQ39mx1YFzVXcuQUkfd2bmDgsV2CjLZzJhWcJk06TSvRt/EaAEc3uBLNGWxmo3R7/rXngbqoHyl9EsFkacagU8OtI4tRj6ytWC2JKYNJQ3lO308KJqUl7IEtINDsyf3BfoBbom9tdHtzEYjvER0Bv8rmsuGoamI0gBdX09P4cBM9v5/68cxEwp5uweOKl35GZTcKz8F8Z6izKd3CVa5k48G5MoFmyPpCOyk6C2Sok5/RNpHYhCHN01t1Te0ITWhRC7TggYgk8/aU6PiIlJwuBmoL5miBsAB9ROK3UPciQ/MkAFXobHQXDdyAwIDAQAB",
   "description": "Adds your company brand colors directly into the native color pickers in Google Docs, Sheets, and Slides.",
   "minimum_chrome_version": "111",

@@ -10,6 +10,10 @@
  *
  *   1. Fast path: if `hex` is already a custom swatch in the open picker, click
  *      it (applies). Covers repeat use, and Sheets after first registration.
+ *   1b. If `hex` is one of Google's own main-grid colours, click that cell.
+ *      Google never adds a custom swatch for a colour it already has, so the
+ *      dialog route cannot be confirmed for these (bd
+ *      `workspace-custom-palette-ox4`, verified live 2026-11-11).
  *   2. Otherwise drive the dialog (custom button → hex + Enter → OK) to REGISTER
  *      the color. This also applies it directly in Docs/Slides. It closes the
  *      picker.
@@ -34,7 +38,7 @@
 import { normalizeHex, hexToRgb } from "../lib/hex.js";
 import {
   findCustomColorEntry, findCustomDialog, findCustomDialogFor, findOkButtonFor, findVariantTab,
-  variantAppliesOnOk, findHexInput, readDialogRgb, findSwatchByHex,
+  variantAppliesOnOk, variantIsShared, findHexInput, readDialogRgb, findSwatchByHex, findBuiltinSwatchByColor,
 } from "./dom-contract.js";
 import { syntheticClick, setNativeInputValue, pressEnter } from "../lib/pointer-sequence.js";
 
@@ -145,6 +149,22 @@ export async function applyColor(hex, doc = document, reopen = null) {
   if (existing) {
     syntheticClick(existing);
     return;
+  }
+
+  // 1b. One of Google's own palette colours (pure black, pure red, ...): click
+  //     its cell. Google will not register a custom swatch for a colour its
+  //     grid already has, so going through the dialog applied the colour and
+  //     then failed step 3's confirmation on every single click, with a banner
+  //     and the picker left open. Only on the shared widget: a picker with its
+  //     own overrides may use the same markup for something that is not a plain
+  //     colour (the dropdown chip's cells are text-and-background pairs).
+  const entry = findCustomColorEntry(doc);
+  if (!entry || variantIsShared(entry)) {
+    const builtin = findBuiltinSwatchByColor(doc, normalized);
+    if (builtin) {
+      syntheticClick(builtin);
+      return;
+    }
   }
 
   // 2. Register the color (also applies directly in Docs/Slides).

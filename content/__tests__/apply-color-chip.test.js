@@ -186,3 +186,35 @@ test("a brand colour that IS a built-in chip swatch takes the fast path", async 
     restore();
   }
 });
+
+test("a chip cell merely PAINTED the brand colour is not clicked; the dialog is used", async () => {
+  // applyColor's step 1b clicks a main-grid cell painted the brand hex, but
+  // only on the shared toolbar widget. This picker's cells are
+  // text-and-background pairs, so a cell that happens to be painted the brand
+  // colour is not "that colour" and must be left alone (roborev 7172).
+  loadContract(contract);
+  const { doc, restore } = mount();
+  try {
+    const { log } = simulateGoogle(doc);
+    const cell = /** @type {HTMLElement} */ (doc.querySelector("td.docs-material-colorpalette-cell"));
+    // Label it with no hex so findSwatchByHex cannot match; only the painted
+    // colour could.
+    cell.setAttribute("aria-label", "light green 5");
+    let inner = /** @type {HTMLElement | null} */ (cell.querySelector("div.docs-material-colorpalette-colorswatch"));
+    if (!inner) {
+      inner = doc.createElement("div");
+      inner.className = "docs-material-colorpalette-colorswatch";
+      cell.appendChild(inner);
+    }
+    inner.style.backgroundColor = "rgb(18, 52, 86)"; // #123456
+    let cellClicks = 0;
+    for (const c of doc.querySelectorAll("td.docs-material-colorpalette-cell")) {
+      c.addEventListener("click", () => { cellClicks++; });
+    }
+    await applyColor("#123456", doc, null);
+    assert.equal(cellClicks, 0, "a chip grid cell was clicked for a brand colour");
+    assert.equal(log.okClicks, 1, "the chip's custom-colour dialog was not driven");
+  } finally {
+    restore();
+  }
+});

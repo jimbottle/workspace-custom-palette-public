@@ -147,6 +147,7 @@ test("findSwatchByHex: matches a VISIBLE swatch whose aria-label carries the hex
   const cell = (/** @type {string} */ label, /** @type {number} */ rects = 1) => ({
     getClientRects: () => (rects ? [{}] : []),
     getAttribute: () => label,
+    closest: () => null, // not inside our Brand row
   });
   const root = /** @type {any} */ ({
     querySelectorAll: () => [

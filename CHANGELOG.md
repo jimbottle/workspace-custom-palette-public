@@ -3,6 +3,157 @@
 All notable changes to Custom Color Palette for Google Workspace Docs, Sheets & Slides. Format: [Keep a Changelog];
 this project follows [Semantic Versioning]. Audience: maintainers.
 
+## [0.2.4] — 2026-11-12
+
+### Changed
+
+- **Import asks for the new palette's name, and stays available while an
+  organization palette is on screen** (owner, 2026-11-12). With Multiple
+  palettes on, `importText` in `options/options.js` no longer creates a
+  palette named "Imported" on the click: it validates the box
+  (`readImportable`), then reveals an inline name step (`#import-name-row`
+  in `options/options.html`; `openImportName`, `createImportedPalette`).
+  The field is prefilled with `importedPaletteName()` and selected; Enter or
+  "Create palette" creates and switches, Escape or Cancel creates nothing, a
+  blank name falls back to the suggestion. Inline rather than a dialog, like
+  rename. The button reads "Import as new palette" with the opt-in on and
+  "Import from box" with it off (`renderImportControls`), and a full list
+  (`MAX_PALETTES`) is refused before the name is asked for.
+  `applyLockAffordances` used to hide Import whenever the palette on screen
+  was enforced, which left a locked user with an Import / export section
+  that could not import and did not say why. An import-as-new never writes
+  the organization's palette, so Import is now hidden only when the opt-in
+  is off AND the palette on screen is enforced; this reverses the earlier
+  "switch to a palette of your own first" rule recorded in `importText`.
+  With the opt-in off the behavior is unchanged. A confirmed name step
+  creates once: `createImportedPalette` ignores a second confirm while the
+  first is in flight (`importing`) and a held Enter (`ev.repeat`), which
+  otherwise left a stored palette that no list pointed at (roborev 7244).
+  Tests: eight new or
+  changed cases in `options/__tests__/options-glue.test.js` and
+  `options-locked.test.js`; `dev/pages-smoke.mjs` B6e drives the name step
+  in a real Chromium. `manifest.json` and `package.json` move to 0.2.4.
+
+## [0.2.3] — 2026-11-12
+
+### Fixed
+
+- **"Copy current palette" copies to the clipboard, and the import/export box
+  shows the palette on screen** (owner, 2026-11-11; bd `workspace-custom-palette-8jc`).
+  `exportText` in `options/options.js` only filled the textarea while the
+  button said Copy and the status said Copied; it now also calls
+  `navigator.clipboard.writeText` (a click is a user gesture, so no new
+  permission) and, if the clipboard refuses, selects the text and says so
+  instead of claiming a copy. The box used to sit empty behind a placeholder
+  of two example colors; opening the section (`details#io`, new id) now
+  fills it from `editor.getWorking()` through `showPaletteInBox`, which
+  leaves alone any text the user typed or pasted (`boxAutoText` tracks what
+  the page put there). Because the box is no longer empty by default,
+  `importText` refuses text the page itself wrote (`box.value ===
+  boxAutoText`) as well as a list identical to the palette on screen; either
+  would otherwise create a duplicate palette named "Imported", and a preview
+  gone stale after a row edit would also discard that edit. An open preview
+  is refreshed by `refreshOpenPreview` when `presentPalette` or `applyPolicy`
+  puts a different palette on screen (roborev 7186). Tests: six
+  cases in `options/__tests__/options-glue.test.js`. The clipboard write
+  itself is not exercised in a real browser by any tier.
+
+- **A Brand click no longer fails or false-banners for two kinds of healthy
+  swatch** (field report 2026-11-11, 0.2.2, Sheets; bd
+  `workspace-custom-palette-ox4`). Both come from a Brand cell being a clone
+  of a palette cell, so it matches the contract's `swatchCell`.
+  - *A swatch named by its hex.* `parsePaletteText` names a bare `#1A73E8`
+    line `#1A73E8`, so the cell's label is `Brand: #1A73E8` and
+    `findSwatchByHex` (`content/dom-contract.js`) took it for a registered
+    custom swatch. `applyColor`'s fast path then clicked the cell the user had
+    just clicked, re-entering itself until the stack overflowed: no colour,
+    and no banner either, because the `RangeError` is thrown inside an event
+    listener and never rejects `applyColor` (seen live on the store 0.2.2
+    build, 2026-11-11). `findSwatchByHex` now skips cells inside our own row. The
+    row markers `MARK`/`LABEL_MARK` moved to a leaf module, `content/marks.js`,
+    so `dom-contract.js` can read them; `injector.js` re-exports them.
+  - *A hex equal to one of Google's own colours.* Google adds no CUSTOM swatch
+    for a colour its main grid already has (verified live in Sheets, Chrome
+    157, with `#000000` and `#ff0000`) and labels that grid by name, so the
+    dialog applied the colour and step 3's confirmation then threw "missing
+    from the reopened picker" on every click, leaving the picker open
+    (reproduced live on the store 0.2.2 build with a `#FF0000` swatch: cell
+    filled, banner shown; this is the case that matches the report). New
+    `findBuiltinSwatchByColor` matches a visible main-grid cell on the painted
+    colour of `swatchInner` (locale-independent) and `applyColor` step 1b
+    clicks it without opening the dialog. Shared widget only
+    (`variantIsShared`): the dropdown-chip picker's cells are colour pairs.
+    `cssColorToHex` in `lib/hex.js` reads the computed colour and treats a
+    transparent one as no colour, not black.
+  Tests: `content/__tests__/apply-color-builtin.test.js`,
+  `lib/__tests__/hex.test.js`, and a case in
+  `content/__tests__/apply-color-chip.test.js` pinning that the chip picker
+  never takes the built-in shortcut. Not yet covered by the monitor, whose palette
+  has no built-in hex. `docs/SPEC.md` records both lookups.
+
+### Added
+
+- **`docs/TESTING-0.2.3.md`, the release-test script for this version.** It
+  adds ten rows for the two swatch kinds the apply fix covers (named by its
+  hex; equal to a colour in Google's main grid) across Sheets, Docs and
+  Slides, including the dropdown-chip picker where the built-in shortcut
+  must not be taken, reuses the twelve-row matrix of
+  `docs/TESTING-0.2.2.md` on the default palette, and lists the Settings
+  clipboard check only a person can do. Run 1 records the ten new rows
+  10/10 and the standing matrix 12/12 on 588ba09.
+
+- **`scripts/release.sh` rolls the early version bump instead of refusing
+  it.** The version is bumped in the first commit after a release and the
+  changelog heading reads `[x.y.z] — Unreleased` until the cut (owner ruling
+  2026-11-05: the bump persists, even for the smallest patch). The script used
+  to refuse any existing `## [x.y.z]` heading; it now dates that heading (or a
+  bare `## [Unreleased]`) and drops an Unreleased marker from the matching
+  `RELEASE_NOTES.md` heading, and refuses only a heading that is already
+  dated, or an open Unreleased heading for a different version (a typo or a
+  reclassified release would otherwise strand the hand-written entries
+  under a git-cliff section). git-cliff still runs when neither heading
+  exists.
+- **The public snapshot leaves out `.github/` and the agent workflow files**
+  (`PRIVATE_PATHS` in `dev/publish-public.sh`: `.claude/`, `CLAUDE.md`,
+  `AGENTS.md`, `docs/HANDOFF.md`). Owner, 2026-11-05: keep repo plumbing and
+  the agent workflow private; `release.yml` would also create a GitHub
+  Release on the public repo per tag. `README.md` no longer links
+  `CLAUDE.md`, and the docs a reader follows (`docs/DEPLOY.md`,
+  `monitor/README.md`, `LAUNCH_CHECKLIST.md`) state the rule or point at a
+  public file instead. Code comments and decision records still cite
+  `CLAUDE.md` as provenance.
+
+- **Public mirror is refreshed from release tags only**
+  (`dev/publish-public.sh`, `LAUNCH_CHECKLIST.md` section 9). Decision
+  2026-11-05 (bd `workspace-custom-palette-0mg`): the public repo
+  `jimbottle/workspace-custom-palette-public` is a production snapshot that
+  moves once per released version, not a second place to work. The private
+  history keeps a real organization's domain and the old `.beads/` export
+  (roborev 6449), so it is never pushed there. The script snapshots a
+  `v<version>` tag with `git archive`, refuses a tag whose version has no
+  released heading (a dated `## [x.y.z]` in `CHANGELOG.md`, or a
+  `RELEASE_NOTES.md` heading; an Unreleased marker in either file refuses
+  it, and a file missing at the tag is reported, not a silent exit) or that
+  the public repo
+  already has, fails on any hit from a scrub denylist kept outside the repo
+  (`~/.config/raylytics/wcp-public-scrub.txt`; a missing list, or a grep
+  that cannot read a file, fails rather than skips; binary files are
+  scanned too), on `.beads/`/`.env`/Dolt data, and on any gitleaks finding
+  other than `manifest.json`'s `key`, then commits as the GitHub noreply
+  author with a signed annotated tag. It pushes only with `--push`.
+  Exercised against a local copy of the public repo: identical snapshot
+  refused, a changed one committed, tagged and pushed, a repeat refused, a
+  planted denylist string blocked.
+
+### Changed
+
+- **Store listing links the admin setup page**
+  (`STORE_LISTING.md`, FOR ORGANIZATIONS). The 2026-10-08 listing review found
+  administrators had no link to setup steps. The page,
+  `https://raylytics.io/custom-color-palette/admin`, is a short version of
+  `docs/ADMIN_GUIDE.md` hosted by the site repo; the line goes into the
+  listing on the next upload (bd `workspace-custom-palette-aqi`).
+
 ## [0.2.2] — 2026-10-08
 
 ### Changed

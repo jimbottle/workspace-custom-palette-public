@@ -23,11 +23,13 @@ Pre-submission gate for a Chrome Web Store release. Full deploy detail is in
 
 ## 3. Version + changelog
 
-- [ ] Bump `manifest.json` `version` (and `package.json`) per the
-      semver rules in CLAUDE.md. Every CWS upload needs a higher version string;
-      burned numbers can't be reused.
-- [ ] Roll `CHANGELOG.md` `[Unreleased]` → `[<version>] — <date>` and add a
-      `RELEASE_NOTES.md` entry (user-facing).
+- [ ] `manifest.json` / `package.json` already carry the new version: it is
+      bumped in the first commit after a release, not here (semver,
+      default to a patch). Every CWS upload needs a higher version string; burned
+      numbers can't be reused.
+- [ ] `CHANGELOG.md` has a `[<version>] — Unreleased` section and, for a
+      user-visible change, `RELEASE_NOTES.md` has a `<version>` entry.
+      `scripts/release.sh <version>` dates both headings at the cut.
 
 ## 4. Assets + listing
 
@@ -65,6 +67,23 @@ Pre-submission gate for a Chrome Web Store release. Full deploy detail is in
 ## 8. Commit + push
 
 - [ ] Commit the version bump + changelog; push.
+
+## 9. Public mirror (after the store accepts the version)
+
+The public repo, `jimbottle/workspace-custom-palette-public`, is the
+production snapshot: it moves only on a release, one squashed commit per
+version (owner decision 2026-11-05, bd `workspace-custom-palette-0mg`).
+
+- [ ] The tag is the one `scripts/release.sh <version>` made on the release
+      commit, which also dated the headings. The publish script refuses a tag
+      whose notes still say Unreleased (`v0.2.2` was tagged before its roll
+      and fails that check).
+- [ ] `bash dev/publish-public.sh` builds the snapshot from the tag and runs
+      the scrub denylist (kept outside the repo at
+      `~/.config/raylytics/wcp-public-scrub.txt`), the local-data check and
+      gitleaks, and leaves out `.github/` and the agent workflow files. It commits locally and stops.
+- [ ] With the owner's go-ahead, `bash dev/publish-public.sh --push`. Never
+      push private history or a non-release commit to the public repo.
 
 ## If something goes wrong
 

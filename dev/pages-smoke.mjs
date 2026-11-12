@@ -292,7 +292,14 @@ try {
   await page.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
   await page.locator("#text").fill("Poppy #FE5917\nGrass #385834");
   await page.locator("#import").click();
-  await page.waitForFunction(() => /new palette/.test(document.getElementById("status").textContent || ""), null, { timeout: 5000 });
+  // 0.2.4: the click asks for a name first. Only this tier can see that the
+  // name row is really laid out (it shares .actions, which sets display).
+  await page.locator("#import-name-row").waitFor({ state: "visible", timeout: 5000 });
+  check("B6e the name step is shown with a suggestion", await page.locator("#import-name").inputValue() === "Imported");
+  check("B6e the name field has focus", await page.evaluate(() => document.activeElement?.id === "import-name"));
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(() => /into a new palette/.test(document.getElementById("status").textContent || ""), null, { timeout: 5000 });
+  check("B6e the name step closes after the import", !(await page.locator("#import-name-row").isVisible()));
   const status = await page.locator("#status").innerText();
   const hexes = await page.locator("#rows [data-bpi-hex]").evaluateAll((els) => els.map((e) => e.value));
   check("B6e import creates a palette named Imported", /"Imported"/.test(status), status);

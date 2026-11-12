@@ -94,15 +94,52 @@ test("options: a lock arriving after render remounts the editor read-only", asyn
   }
 });
 
-test("options: locked hides Save, Reset, Add and Import but keeps Export", async () => {
+test("options: locked hides Save, Reset and Add but keeps Export and import-as-new", async () => {
   const page = await mountOptions();
   try {
-    for (const id of ["save", "reset", "add", "import"]) {
+    for (const id of ["save", "reset", "add"]) {
       assert.equal(page.byId(id).hidden, true, `#${id} hidden while locked`);
     }
     // Export only reads. Being unable to edit the org palette is no reason to
     // be unable to copy it out.
     assert.equal(page.byId("export").hidden, false, "Export stays available");
+    // With Multiple palettes on (the default) an import makes a NEW palette and
+    // never writes the organization's, so the lock is no reason to hide it.
+    // Hidden, it left a section called Import / export with no way to import
+    // and nothing saying why (owner, 2026-11-12).
+    assert.equal(page.byId("import").hidden, false, "Import stays available");
+    assert.equal(page.byId("import").textContent, "Import as new palette");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: a locked user can import into a new palette of their own", async () => {
+  const page = await mountOptions();
+  try {
+    /** @type {HTMLTextAreaElement} */ (page.byId("text")).value = "Headers #1F4E78\nOrange #FF9900";
+    page.click(page.byId("import"));
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    /** @type {HTMLInputElement} */ (page.byId("import-name")).value = "Customer";
+    page.click(page.byId("import-create"));
+    await waitFor(() => /into a new palette, "Customer"/.test(page.status()), { label: "the import" });
+
+    assert.deepEqual(page.shownHexes(), ["#1F4E78", "#FF9900"], "the editor is on the imported colors");
+    assert.equal(page.byId("save").hidden, false, "and their own palette is editable under the lock");
+    const data = page.fake.sync.snapshot();
+    assert.equal(data[`pal:${data.activePaletteId}`].name, "Customer");
+    const select = /** @type {HTMLSelectElement} */ (page.byId("active-palette"));
+    assert.equal([...select.options].some((o) => o.value.startsWith("org")), true,
+      "the organization's palette is still there to switch back to");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: locked with Multiple palettes off hides Import, which has nowhere to write", async () => {
+  const page = await mountOptions({ sync: { multiPalette: false } });
+  try {
+    assert.equal(page.byId("import").hidden, true);
   } finally {
     page.unmount();
   }
@@ -111,7 +148,9 @@ test("options: locked hides Save, Reset, Add and Import but keeps Export", async
 test("options: Save, Reset and Import all refuse while locked, and write nothing", async () => {
   // The buttons are hidden, so this drives them the way anything else could —
   // directly. Refusal has to live in the handlers, not only in the markup.
-  const page = await mountOptions({ sync: { palette: MINE } });
+  // Opted out, so Import has nowhere to write but the palette on screen: with
+  // the opt-in on it makes a new palette, which the lock allows.
+  const page = await mountOptions({ sync: { palette: MINE, multiPalette: false } });
   try {
     for (const id of ["save", "reset", "import"]) {
       page.byId(id).hidden = false; // make it reachable, as devtools would

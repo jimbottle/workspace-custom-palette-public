@@ -310,9 +310,17 @@ test("options: with Multiple palettes on, import creates a NEW palette and switc
   try {
     const box = /** @type {HTMLTextAreaElement} */ (page.byId("text"));
     box.value = "Poppy #FE5917\nGrass #385834";
+    assert.equal(page.byId("import").textContent, "Import as new palette", "the button says what it will do");
     page.click(page.byId("import"));
-    await waitFor(() => /new palette/.test(page.status()), { label: "the import" });
+    // The click asks for a name first and creates nothing yet.
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    assert.match(page.status(), /Found 2 colors/);
+    assert.equal(/** @type {HTMLInputElement} */ (page.byId("import-name")).value, "Imported", "a name is suggested");
+    assert.deepEqual(page.fake.sync.snapshot().paletteOrder, ["a"], "nothing is created before the name is confirmed");
+    page.click(page.byId("import-create"));
+    await waitFor(() => /into a new palette/.test(page.status()), { label: "the import" });
 
+    assert.equal(page.byId("import-name-row").hidden, true, "the name step closes");
     assert.match(page.status(), /"Imported"/, "the status names the palette it made");
     assert.deepEqual(page.shownHexes(), ["#FE5917", "#385834"], "the editor is on the imported colors");
 
@@ -338,8 +346,112 @@ test("options: a second import does not collide with the first palette's name", 
     const box = /** @type {HTMLTextAreaElement} */ (page.byId("text"));
     box.value = "Poppy #FE5917";
     page.click(page.byId("import"));
-    await waitFor(() => /new palette/.test(page.status()), { label: "the import" });
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    assert.equal(/** @type {HTMLInputElement} */ (page.byId("import-name")).value, "Imported 2");
+    page.click(page.byId("import-create"));
+    await waitFor(() => /into a new palette/.test(page.status()), { label: "the import" });
     assert.match(page.status(), /"Imported 2"/);
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: an import takes the name typed in the name step, confirmed with Enter", async () => {
+  // Owner, 2026-11-12: an import silently became a palette called "Imported".
+  // The name is now asked for, and Enter in the field is the same as Create.
+  const page = await mountSwitcherOptions();
+  try {
+    /** @type {HTMLTextAreaElement} */ (page.byId("text")).value = "Poppy #FE5917";
+    page.click(page.byId("import"));
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    const input = /** @type {HTMLInputElement} */ (page.byId("import-name"));
+    input.value = "  Client deck  ";
+    input.dispatchEvent(new page.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    await waitFor(() => /into a new palette/.test(page.status()), { label: "the import" });
+    assert.match(page.status(), /"Client deck"/);
+    const data = page.fake.sync.snapshot();
+    assert.equal(data[`pal:${data.activePaletteId}`].name, "Client deck", "stored trimmed, and active");
+    assert.deepEqual(page.shownHexes(), ["#FE5917"]);
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: confirming the name step twice creates one palette, not two", async () => {
+  // A double click, or Enter followed by a click, used to start a second
+  // createPalette while the first was pending (roborev 7244).
+  const page = await mountSwitcherOptions();
+  try {
+    /** @type {HTMLTextAreaElement} */ (page.byId("text")).value = "Poppy #FE5917";
+    page.click(page.byId("import"));
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    page.click(page.byId("import-create"));
+    page.click(page.byId("import-create"));
+    page.byId("import-name").dispatchEvent(new page.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    await waitFor(() => /into a new palette/.test(page.status()), { label: "the import" });
+    await new Promise((r) => setTimeout(r, 100));
+    const data = page.fake.sync.snapshot();
+    assert.equal(data.paletteOrder.length, 2, "Alpha plus exactly one import");
+    // Racing creates each read the same order and the last write wins, so the
+    // loser is not a second listed palette but an orphaned stored one that
+    // nothing lists and that still counts against the sync quota.
+    assert.equal(Object.keys(data).filter((k) => k.startsWith("pal:")).length, 2, "no orphaned palette is stored");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: a blank name falls back to the suggestion", async () => {
+  const page = await mountSwitcherOptions();
+  try {
+    /** @type {HTMLTextAreaElement} */ (page.byId("text")).value = "Poppy #FE5917";
+    page.click(page.byId("import"));
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    /** @type {HTMLInputElement} */ (page.byId("import-name")).value = "   ";
+    page.click(page.byId("import-create"));
+    await waitFor(() => /into a new palette/.test(page.status()), { label: "the import" });
+    assert.match(page.status(), /"Imported"/);
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: cancelling the name step creates nothing", async () => {
+  const page = await mountSwitcherOptions();
+  try {
+    /** @type {HTMLTextAreaElement} */ (page.byId("text")).value = "Poppy #FE5917";
+    for (const cancel of [
+      () => page.click(page.byId("import-cancel")),
+      () => page.byId("import-name").dispatchEvent(new page.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+    ]) {
+      page.click(page.byId("import"));
+      await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+      cancel();
+      assert.equal(page.byId("import-name-row").hidden, true, "the name step closes");
+      assert.match(page.status(), /Nothing was created/);
+    }
+    const data = page.fake.sync.snapshot();
+    assert.deepEqual(data.paletteOrder, ["a"], "no palette was made");
+    assert.equal(data.activePaletteId, "a");
+    assert.deepEqual(page.shownHexes(), ["#111111"], "the editor is still on Alpha");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: turning Multiple palettes off closes an open name step", async () => {
+  // With the opt-in off an import loads the editor and makes no palette, so a
+  // "Create palette" button left on screen would promise the wrong thing.
+  const page = await mountSwitcherOptions();
+  try {
+    /** @type {HTMLTextAreaElement} */ (page.byId("text")).value = "Poppy #FE5917";
+    page.click(page.byId("import"));
+    await waitFor(() => !page.byId("import-name-row").hidden, { label: "the name step" });
+    const toggle = /** @type {HTMLInputElement} */ (page.byId("multi-palette"));
+    toggle.checked = false;
+    page.fire(toggle, "change");
+    assert.equal(page.byId("import-name-row").hidden, true);
+    assert.equal(page.byId("import").textContent, "Import from box");
   } finally {
     page.unmount();
   }
@@ -365,6 +477,143 @@ test("options: with Multiple palettes OFF, import still only loads the editor", 
   }
 });
 
+
+/**
+ * Give the mounted page a clipboard. jsdom has none, which is also the
+ * "clipboard refused" case, so a test that wants a refusal just skips this.
+ * @param {{ window: any }} page @returns {string[]} everything written, in order
+ */
+function stubClipboard(page) {
+  /** @type {string[]} */
+  const written = [];
+  Object.defineProperty(page.window.navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: async (/** @type {string} */ t) => { written.push(t); } },
+  });
+  return written;
+}
+
+test("options: Copy current palette puts the palette on the clipboard", async () => {
+  // The button said "Copy" and the status said "Copied", but all it did was
+  // fill the box (owner, 2026-11-11).
+  const page = await mountSwitcherOptions();
+  try {
+    const written = stubClipboard(page);
+    page.click(page.byId("export"));
+    await waitFor(() => /clipboard/.test(page.status()), { label: "the copy status" });
+    assert.deepEqual(written, ["A #111111"]);
+    assert.equal(/** @type {HTMLTextAreaElement} */ (page.byId("text")).value, "A #111111", "the box shows it too");
+    assert.equal(page.byId("status").classList.contains("error"), false);
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: a refused clipboard is reported, never a false Copied", async () => {
+  const page = await mountSwitcherOptions(); // no clipboard in jsdom: writeText throws
+  try {
+    page.click(page.byId("export"));
+    await waitFor(() => page.status() !== "", { label: "the copy status" });
+    assert.match(page.status(), /Could not reach the clipboard/);
+    assert.equal(page.byId("status").classList.contains("error"), true);
+    assert.equal(/** @type {HTMLTextAreaElement} */ (page.byId("text")).value, "A #111111",
+      "the text is still in the box to copy by hand");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: opening Import / export shows the palette on screen, not the example", async () => {
+  const page = await mountSwitcherOptions();
+  try {
+    const io = /** @type {HTMLDetailsElement} */ (page.byId("io"));
+    const box = /** @type {HTMLTextAreaElement} */ (page.byId("text"));
+    // jsdom fires `toggle` itself, a task after `open` changes, as a browser
+    // does. Wait for that one rather than dispatching a second by hand.
+    const settle = () => new Promise((r) => setTimeout(r, 30));
+    io.open = true;
+    await waitFor(() => box.value !== "", { label: "the preview" });
+    assert.equal(box.value, "A #111111");
+
+    // A list the user pasted is a pending import and must survive a reopen.
+    box.value = "Poppy #FE5917";
+    io.open = false;
+    await settle();
+    io.open = true;
+    await settle();
+    assert.equal(box.value, "Poppy #FE5917", "a pasted list was overwritten");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: Import on the untouched preview does not duplicate the palette", async () => {
+  // The box now holds the palette on screen by default, so a stray Import click
+  // would otherwise create a copy named "Imported" and switch to it.
+  const page = await mountSwitcherOptions();
+  try {
+    const io = /** @type {HTMLDetailsElement} */ (page.byId("io"));
+    io.open = true;
+    await waitFor(() => /** @type {HTMLTextAreaElement} */ (page.byId("text")).value !== "", { label: "the preview" });
+    page.click(page.byId("import"));
+    await waitFor(() => page.status() !== "", { label: "the import status" });
+    assert.match(page.status(), /Nothing new to import/);
+    assert.deepEqual(page.fake.sync.snapshot().paletteOrder, ["a"], "no new palette was created");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: Import refuses the page's own preview even after the palette changed under it", async () => {
+  // The preview is written when the section opens. Edit a row afterwards and
+  // the box no longer equals the palette on screen, so a guard that compares
+  // against the current palette misses: Import would create "Imported" from
+  // the OLD colors, though the user never touched the box (roborev 7186).
+  const page = await mountSwitcherOptions();
+  try {
+    const box = /** @type {HTMLTextAreaElement} */ (page.byId("text"));
+    /** @type {HTMLDetailsElement} */ (page.byId("io")).open = true;
+    await waitFor(() => box.value !== "", { label: "the preview" });
+    assert.equal(box.value, "A #111111");
+
+    page.typeInto(page.doc.querySelector("#rows [data-bpi-hex]"), "#222222");
+    page.click(page.byId("import"));
+    await waitFor(() => page.status() !== "", { label: "the import status" });
+
+    assert.match(page.status(), /Nothing new to import/);
+    assert.deepEqual(page.fake.sync.snapshot().paletteOrder, ["a"], "a duplicate palette was created");
+    assert.deepEqual(page.shownHexes(), ["#222222"], "the unsaved edit was thrown away");
+  } finally {
+    page.unmount();
+  }
+});
+
+test("options: an open preview follows a palette switch, but never a pasted list", async () => {
+  const page = await mountSwitcherOptions({
+    "pal:b": { name: "Beta", swatches: [{ name: "B", hex: "#222222", order: 0 }] },
+    paletteOrder: ["a", "b"],
+  });
+  try {
+    const box = /** @type {HTMLTextAreaElement} */ (page.byId("text"));
+    const select = /** @type {HTMLSelectElement} */ (page.byId("active-palette"));
+    const switchTo = async (/** @type {string} */ id, /** @type {string} */ hex) => {
+      select.value = id;
+      select.dispatchEvent(new page.window.Event("change", { bubbles: true }));
+      await waitFor(() => page.shownHexes()[0] === hex, { label: `the switch to ${id}` });
+    };
+    /** @type {HTMLDetailsElement} */ (page.byId("io")).open = true;
+    await waitFor(() => box.value !== "", { label: "the preview" });
+
+    await switchTo("b", "#222222");
+    assert.equal(box.value, "B #222222", "the preview still shows the previous palette");
+
+    box.value = "Poppy #FE5917";
+    await switchTo("a", "#111111");
+    assert.equal(box.value, "Poppy #FE5917", "a pasted list was overwritten by a switch");
+  } finally {
+    page.unmount();
+  }
+});
 
 test("no shipped file branches on HOW the extension was installed", async () => {
   // Force install and Allow install must be indistinguishable to this

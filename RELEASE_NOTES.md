@@ -2,6 +2,38 @@
 
 What changed for you, in plain terms. For the engineering log see CHANGELOG.md.
 
+## 0.2.4
+
+### Changed
+
+Importing a list of colors on the Settings page now asks what to call the
+new palette before creating it, with a suggested name you can accept by
+pressing Enter. The button reads "Import as new palette" so it is clear that
+nothing you already have is replaced. Import is also available while your
+organization's palette is on screen: the imported colors go into a palette of
+your own.
+
+## 0.2.3
+
+### Fixed
+
+On the Settings page, "Copy current palette" now really copies your palette
+to the clipboard, ready to paste into a message or another computer. Before,
+it only placed the list in the box. The Import / export box also shows your
+own colors when you open it, in place of two example colors.
+
+Two cases where clicking a brand color went wrong, with nothing actually
+wrong in Google's color picker. Both are fixed.
+
+If a color's name was its own hex code (for example a color named #1A73E8,
+which is what you get when you import a list of bare hex codes), clicking it
+did nothing at all. It now applies.
+
+If a color was one that Google already offers in its own grid, such as pure
+black, white or red, it was applied but the message "That brand color
+couldn't be applied" appeared anyway, every time. The message no longer
+appears, and these colors apply faster.
+
 ## 0.2.2
 
 ### Added

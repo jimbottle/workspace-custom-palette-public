@@ -1,6 +1,6 @@
 {
   "name": "custom-color-palette",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "private": true,
   "type": "module",
   "description": "Chrome MV3 extension that injects a brand color palette into the native Google Docs/Sheets/Slides color pickers.",

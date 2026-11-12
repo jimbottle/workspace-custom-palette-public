@@ -6,7 +6,7 @@
  */
 
 import { isValidHex } from "../lib/hex.js";
-import { normalizePalette, resolvePalette, paletteKey, planPolicyApply, isActivePaletteReadOnly, planPaletteSwitcher, planOptOut, isOrgPaletteId, orgPaletteSwatches, resolveActiveUserPalette, MAX_SWATCHES, MAX_PALETTES } from "../lib/palette.js";
+import { normalizePalette, resolvePalette, paletteKey, planPolicyApply, isActivePaletteReadOnly, planPaletteSwitcher, planOptOut, isOrgPaletteId, orgPaletteSwatches, resolveActiveUserPalette, MAX_SWATCHES, MAX_PALETTES, MAX_PALETTE_NAME } from "../lib/palette.js";
 import { formatPaletteText, parsePaletteText } from "../lib/palette-text.js";
 import { orgSwatches, orgPalettes } from "../lib/config.js";
 import { getUserPalette, setUserPalette, clearUserPalette, getPaletteState, getMultiPalette, setMultiPalette, setActivePalette, createPalette, deletePalette, renamePalette, ensureDefaultPersonalPalette, getManagedPolicyWithin, onManagedChanged, getTheme, setTheme } from "../lib/storage.js";
@@ -182,6 +182,7 @@ function applyManaged(managed, locked = false, activePaletteId) {
  * cannot drift into different ideas of them.
  */
 function renderSwitcher() {
+  renderImportControls(); // every change to the opt-in re-renders the switcher
   const plan = planPaletteSwitcher({
     orgPalettes: orgList, palettes: userList,
     activePaletteId: activeId, locked: policyLocked, optIn: multiPalette,
@@ -247,14 +248,37 @@ function renderSwitcher() {
 /**
  * Hide the controls that can only end in a write the lock forbids.
  *
- * Save, Reset, Add and Import all mutate; Export does not, so it stays — being
- * unable to edit the org palette is no reason to be unable to copy it out.
+ * Save, Reset and Add all mutate the palette on screen; Export does not, so it
+ * stays — being unable to edit the org palette is no reason to be unable to
+ * copy it out. Import has its own rule (renderImportControls).
  */
 function applyLockAffordances() {
-  for (const id of ["save", "reset", "add", "import"]) {
+  for (const id of ["save", "reset", "add"]) {
     const el = document.getElementById(id);
     if (el) el.hidden = paletteReadOnly;
   }
+  renderImportControls();
+}
+
+/**
+ * Show Import whenever it has somewhere to put the colors.
+ *
+ * With Multiple palettes on, an import never touches the palette on screen: it
+ * makes a new one. So an enforced organization palette is no reason to hide
+ * it, and hiding it left the owner looking at an Import / export section with
+ * no way to import and nothing saying why (2026-11-12). It is hidden only when
+ * the one place it could write is a palette the lock forbids: opt-in off and
+ * the organization's palette on screen. The label says which of the two things
+ * the click will do.
+ */
+function renderImportControls() {
+  const btn = document.getElementById("import");
+  if (!btn) return;
+  btn.hidden = paletteReadOnly && !multiPalette;
+  btn.textContent = multiPalette ? "Import as new palette" : "Import from box";
+  // A name step left open would offer "Create palette" for a mode that no
+  // longer creates one.
+  if (btn.hidden || !multiPalette) closeImportName();
 }
 
 /**
@@ -578,6 +602,7 @@ function presentPalette(id, swatches) {
   } else {
     editor.setPalette(rendered);
   }
+  refreshOpenPreview();
   renderSwitcher();
   paintMark();
   // The note branches on paletteReadOnly, which may just have changed, so it
@@ -677,10 +702,63 @@ function addRow() {
   if (!editor.addRow()) setStatus(`Limit is ${MAX_SWATCHES} colors.`, true);
 }
 
-function exportText() {
+/**
+ * The text this page last put into the import/export box itself, as opposed
+ * to anything the user typed or pasted there. It is what lets the box follow
+ * the palette on screen without ever overwriting a list someone is about to
+ * import.
+ */
+let boxAutoText = "";
+
+/**
+ * Show the palette on screen in the import/export box.
+ *
+ * The box used to sit empty behind a placeholder of two example colors, so the
+ * section read as showing somebody else's palette until Copy was clicked
+ * (owner, 2026-11-11). Unless `force`, a box holding text the user put there is
+ * left alone: that text is a pending import.
+ * @param {{ force?: boolean }} [opts]
+ * @returns {string} the palette text now on screen
+ */
+function showPaletteInBox({ force = false } = {}) {
   const box = /** @type {HTMLTextAreaElement} */ (document.getElementById("text"));
-  box.value = formatPaletteText(editor.getWorking());
-  setStatus("Copied current palette into the box below.");
+  const text = formatPaletteText(editor.getWorking());
+  if (force || box.value === "" || box.value === boxAutoText) {
+    box.value = text;
+    boxAutoText = text;
+  }
+  return text;
+}
+
+/** Keep an OPEN preview on the palette just put on screen (a switch, a refresh, a policy change). */
+function refreshOpenPreview() {
+  if (/** @type {HTMLDetailsElement | null} */ (document.getElementById("io"))?.open) showPaletteInBox();
+}
+
+/**
+ * Copy the palette on screen to the clipboard, and show it in the box.
+ *
+ * Until 0.2.3 this only filled the box, while the button said "Copy" and the
+ * status said "Copied" (owner, 2026-11-11). The click is a user gesture, so
+ * writeText needs no permission, as with the per-row copy button. If the
+ * clipboard refuses anyway, say so and leave the text selected in the box,
+ * never a false "Copied".
+ */
+async function exportText() {
+  const box = /** @type {HTMLTextAreaElement} */ (document.getElementById("text"));
+  const text = showPaletteInBox({ force: true });
+  if (!text) {
+    setStatus("There are no colors to copy.", true);
+    return;
+  }
+  try {
+    await window.navigator.clipboard.writeText(text);
+  } catch {
+    box.select();
+    setStatus("Could not reach the clipboard. The palette is selected in the box below, so copy it from there.", true);
+    return;
+  }
+  setStatus("Copied the current palette to the clipboard.");
 }
 
 /**
@@ -705,19 +783,40 @@ function importedPaletteName() {
  * whole point of bd `workspace-custom-palette-m5g`: once a switcher exists,
  * overwriting whatever palette happens to be selected is a destructive answer
  * to "add these colors", so the import becomes a NEW palette and switches to
- * it. With the opt-in off there is no switcher and no second palette to make,
+ * it, after an inline step that asks for its name (openImportName). With the
+ * opt-in off there is no switcher and no second palette to make,
  * so it keeps the original behavior exactly - load into the editor and let
  * Save decide - and the default experience is unchanged.
  */
 async function importText() {
-  // Import is hidden outright while the active palette is enforced
-  // (applyLockAffordances), so this is the backstop for a direct call. It stays
-  // an outright refusal rather than an import-as-new: a locked user reaches
-  // import-as-new by first switching to a palette of their own, where this
-  // guard is false anyway.
-  if (paletteReadOnly) {
-    setStatus("Your organization sets these colors, so they cannot be replaced.", true);
+  const next = readImportable();
+  if (!next) return;
+  if (!multiPalette) {
+    editor.setPalette(next);
+    showPaletteInBox({ force: true });
+    setStatus(`Imported ${next.length} colors. Review, then Save.`);
     return;
+  }
+  if (userList.length >= MAX_PALETTES) {
+    setStatus(`You already have ${MAX_PALETTES} palettes, which is the limit. Delete one, then import.`, true);
+    return;
+  }
+  openImportName(next.length);
+}
+
+/**
+ * The colors in the box, if they are importable; otherwise null, with the
+ * reason already in the status line. Shared by the Import click and by the
+ * name step's Create, because the box can be edited between the two.
+ * @returns {Swatch[] | null}
+ */
+function readImportable() {
+  // With the opt-in off an import loads into the palette on screen, which the
+  // lock forbids. With it on the import makes a new palette and never touches
+  // the organization's, so there is nothing to refuse.
+  if (paletteReadOnly && !multiPalette) {
+    setStatus("Your organization sets these colors, so they cannot be replaced.", true);
+    return null;
   }
   const box = /** @type {HTMLTextAreaElement} */ (document.getElementById("text"));
   // Use normalizePalette, NOT resolvePalette: the latter falls back to defaults
@@ -726,23 +825,85 @@ async function importText() {
   const next = normalizePalette(parsePaletteText(box.value));
   if (next.length === 0) {
     setStatus("No colors found. Use one per line, like: Brand Blue #1A73E8", true);
-    return;
+    return null;
   }
-  if (!multiPalette) {
-    editor.setPalette(next);
-    setStatus(`Imported ${next.length} colors. Review, then Save.`);
-    return;
+  // The box now shows a palette by default, so an Import click on it untouched
+  // would otherwise make a duplicate palette. Text this page wrote is never
+  // importable, whatever has happened on screen since: the preview goes stale
+  // the moment a row is edited, and importing it then would also throw that
+  // unsaved edit away (roborev 7186). The second test catches the same list
+  // typed or pasted by hand.
+  if (box.value === boxAutoText || box.value.trim() === formatPaletteText(editor.getWorking()).trim()) {
+    setStatus("Nothing new to import: the box holds a palette copied from this page. Paste a different list to import it.", true);
+    return null;
   }
+  return next;
+}
+
+/**
+ * Ask what to call the palette an import is about to create.
+ *
+ * Inline, like rename: no dialogs anywhere on this page. Until 0.2.4 the
+ * palette was created at once under the name "Imported", which the owner found
+ * unclear (2026-11-12): nothing on screen said a palette was being made or
+ * what it would be called. The suggestion is still "Imported" (or the next
+ * free "Imported N"), selected, so Enter alone keeps the old one-step feel.
+ * @param {number} count  how many colors the box holds, for the status line
+ */
+function openImportName(count) {
+  const row = document.getElementById("import-name-row");
+  const input = /** @type {HTMLInputElement | null} */ (document.getElementById("import-name"));
+  if (!row || !input) return;
+  input.value = importedPaletteName();
+  row.hidden = false;
+  input.focus();
+  input.select();
+  setStatus(`Found ${count} ${count === 1 ? "color" : "colors"}. Name the new palette, then choose Create palette.`);
+}
+
+function closeImportName() {
+  const row = document.getElementById("import-name-row");
+  if (row) row.hidden = true;
+}
+
+/** True while a confirmed name step is creating its palette. */
+let importing = false;
+
+/**
+ * The name step's Create: make the palette under the chosen name and switch to it.
+ *
+ * One create per confirmed step. The row stays open until the create has
+ * resolved, so a double click, or Enter then a click, used to start a second
+ * createPalette that read the same stored order; the last write won and the
+ * other palette was left stored but listed nowhere (roborev 7244).
+ */
+async function createImportedPalette() {
+  if (importing) return;
+  importing = true;
+  try {
+    await createImportedPaletteOnce();
+  } finally {
+    importing = false;
+  }
+}
+
+async function createImportedPaletteOnce() {
+  const input = /** @type {HTMLInputElement | null} */ (document.getElementById("import-name"));
+  if (!multiPalette) { closeImportName(); return; }
+  const next = readImportable(); // the box may have changed since the name step opened
+  if (!next) { closeImportName(); return; }
+  const name = (input?.value ?? "").trim().slice(0, MAX_PALETTE_NAME) || importedPaletteName();
   // Same materialize-first rule as the New palette button: with no org palette
   // and no stored entry, what is on screen is the packaged fallback, which the
   // switcher cannot list - so creating beside it would orphan it.
   if (userList.length === 0 && orgList.length === 0) {
     await ensureDefaultPersonalPalette(defaults);
   }
-  const name = importedPaletteName();
   const { id } = await createPalette(name, next);
   userList = (await getPaletteState()).palettes;
+  closeImportName();
   await switchPalette(id); // remounts on the imported colors and re-renders
+  showPaletteInBox({ force: true });
   setStatus(`Imported ${next.length} colors into a new palette, "${name}".`);
 }
 
@@ -798,6 +959,7 @@ function applyPolicy(/** @type {Swatch[]} */ managed, /** @type {boolean} */ loc
   } else if (plan.palette) {
     editor.setPalette(plan.palette);
   }
+  refreshOpenPreview();
 }
 
 /**
@@ -1059,8 +1221,25 @@ async function init() {
     delete btn.dataset.armed;
     btn.textContent = "Reset";
   });
-  document.getElementById("export")?.addEventListener("click", exportText);
+  document.getElementById("export")?.addEventListener("click", () => { exportText().catch(report); });
+  // Opening the section shows the palette on screen as it is at that moment,
+  // including edits not yet saved.
+  document.getElementById("io")?.addEventListener("toggle", (e) => {
+    if (/** @type {HTMLDetailsElement} */ (e.currentTarget).open) showPaletteInBox();
+  });
   document.getElementById("import")?.addEventListener("click", () => { importText().catch(report); });
+  document.getElementById("import-create")?.addEventListener("click", () => { createImportedPalette().catch(report); });
+  document.getElementById("import-cancel")?.addEventListener("click", () => {
+    closeImportName();
+    setStatus("Import cancelled. Nothing was created.");
+  });
+  document.getElementById("import-name")?.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      if (!ev.repeat) createImportedPalette().catch(report); // a held key confirms once
+    }
+    if (ev.key === "Escape") { closeImportName(); setStatus("Import cancelled. Nothing was created."); }
+  });
   document.getElementById("feedback")?.addEventListener("click", (e) => {
     e.preventDefault();
     openFeedbackPage();

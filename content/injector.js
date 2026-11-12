@@ -13,11 +13,11 @@ import { applyColor } from "./apply-color.js";
 import { reportApplyFailure } from "./health-probe.js";
 import { syntheticClick } from "../lib/pointer-sequence.js";
 
-/** Attribute marking the injected Brand row. Exported so health-probe can verify it mounted. */
-export const MARK = "data-brand-palette-row";
+import { MARK, LABEL_MARK } from "./marks.js";
 
-/** Attribute marking the cosmetic "Brand" label row (a cloned section header above the swatches). */
-export const LABEL_MARK = "data-brand-palette-label";
+// Re-exported so health-probe and picker-observer keep importing them from
+// here; the definitions live in marks.js so dom-contract can read them too.
+export { MARK, LABEL_MARK };
 
 /**
  * @typedef {{ name: string, hex: string, order: number }} Swatch

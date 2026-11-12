@@ -22,7 +22,6 @@ Admin console; see [`docs/ADMIN_GUIDE.md`](docs/ADMIN_GUIDE.md).
 | `tools/mock-service/` | dependency-free config-service mock for tests |
 | `dev/` | dev-only tooling (hot-reload server, packager, icon generator) |
 | `docs/` | `SETUP.md` (first run), `plan.md`, `SPEC.md`, `TEST_PLAN.md`, `DEPLOY.md`, `ADMIN_GUIDE.md` (for Workspace admins, no checkout needed), `PRIVACY.md` |
-| `CLAUDE.md` | conventions + architecture for contributors/agents (read first) |
 
 The extension lives at the repo root (manifest + code dirs together), so you
 load the repo directory itself.
@@ -71,3 +70,15 @@ disabled by default. See `docs/PRIVACY.md`.
 ## License
 
 [MIT](LICENSE) © 2026 Evan J Ray
+
+### Hooks
+
+```bash
+pre-commit install --hook-type pre-commit --hook-type commit-msg   # once per clone
+```
+
+Commits follow [Conventional Commits 1.0](https://www.conventionalcommits.org/en/v1.0.0/) (`type(scope): subject`, at most 72 characters, a body that says why) and land through squash-merged PRs.
+
+## Releasing
+
+`scripts/release.sh X.Y.Z` on a clean, green `main` bumps `manifest.json`, prepends the release to [CHANGELOG.md](CHANGELOG.md) from the commits with git-cliff, commits `chore(release): vX.Y.Z` and pushes a signed tag; the `release` workflow creates the GitHub Release.

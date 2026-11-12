@@ -21,7 +21,7 @@ npm run auth                             # sign in to the TEST account, press En
 ```
 
 `npm run auth` opens a real Chromium with the extension loaded; sign in to the
-**dedicated test account** (not a personal one — see CLAUDE.md "Monitor auth"),
+**dedicated test account** (not a personal one; see "Monitor auth" in `docs/plan.md`),
 pre-resolving any MFA. The session persists in `monitor/.user-data/` (gitignored;
 no credentials are stored in the repo).
 

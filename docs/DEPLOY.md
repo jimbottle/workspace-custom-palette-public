@@ -1,7 +1,7 @@
 # Deployment runbook
 
 How to ship Custom Color Palette for Google Workspace Docs, Sheets & Slides and run its config service + monitor. Read
-`docs/plan.md` and `CLAUDE.md` first.
+`docs/plan.md` first.
 
 ## What ships where
 
@@ -22,8 +22,8 @@ optional infrastructure that add remote config and breakage detection.
       options + feedback page open.
 - [ ] Permissions are still minimal: `storage`, `alarms`, and host access to the
       three `docs.google.com` editor surfaces only. Any addition must be
-      justified in `docs/PRIVACY.md` and `CHANGELOG.md` (see "Documenting
-      access-affecting changes" in CLAUDE.md).
+      justified in `docs/PRIVACY.md` and `CHANGELOG.md`; a new permission is
+      a Web Store review signal, so name the reason in both.
 - [ ] `CONFIG_BASE` in `config/endpoints.js` is set for the deployment
       (empty = packaged defaults only) and its origin is in `host_permissions`.
 - [ ] **Icons**: `icons/` (16/48/128) ship and are referenced in
@@ -31,8 +31,10 @@ optional infrastructure that add remote config and breakage detection.
       icons` IS the shipping icon (decision 2026-08-09) — it matches the
       adaptive toolbar repaint. Regenerate if the default palette's leading
       colors ever change.
-- [ ] `version` bumped per the semver rules in CLAUDE.md (every CWS upload needs
-      a higher `version` string; burned numbers can't be reused).
+- [ ] `version` is higher than the last upload. It is semver, default to a
+      patch bump, and it is bumped in the first commit after a release (every
+      CWS upload needs a higher `version` string; burned numbers can't be
+      reused).
 - [ ] **Leave `key` in `manifest.json` alone.** It is the Chrome Web Store
       item's own public key, and it pins the extension's ID to
       `hchpnnppgakgmobkbldgkohmplkcahjl` for unpacked loads too. Without it an
@@ -315,8 +317,8 @@ force install today tests 0.1.7, not this tree.
 1. **Publish the build to the Web Store first**, then force install it. The
    Store supports restricting an item's visibility to your own Workspace
    domain, so this need not be a public release. Costs a version number (the
-   Store never lets one be reused) and a review turnaround, and per `CLAUDE.md`
-   nothing may be packaged without the in-browser smoke check first.
+   Store never lets one be reused) and a review turnaround, and nothing may be packaged without the
+   in-browser smoke check first (`LAUNCH_CHECKLIST.md`, section 2).
 2. **Self-host the CRX** and add it by ID with an installation URL, which is
    what the console's *Add Chrome app or extension by ID* path is actually for.
    The extension would then be signed with a key we hold, so it gets its own

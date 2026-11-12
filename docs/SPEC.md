@@ -288,6 +288,26 @@ Still open (NOT feasibility blockers — Phase 1/5 work):
 - **Slides/Docs literal apply** (only Sheets was applied end-to-end; Docs/Slides
   confirmed via shared components — verify literal apply in Phase 1).
 
+### Built-in colours and our own cells (2026-11-11)
+
+Two lookups run before the dialog, and both exist because a Brand cell is a
+clone of a palette cell and so matches every swatch selector in the contract.
+
+- `findSwatchByHex` never returns a cell inside our own Brand row. A swatch
+  named by its hex (an imported bare `#1A73E8` line is named `#1A73E8`) is
+  labelled `Brand: #1A73E8`, which matched; apply-color then clicked the cell
+  the user had just clicked and re-entered itself until the stack overflowed: nothing applied
+  and, because the error is thrown inside an event listener, no banner.
+- `findBuiltinSwatchByColor` finds a cell of Google's MAIN (largest) grid
+  painted exactly the brand hex, and apply-color clicks it instead of opening
+  the dialog. Google adds no CUSTOM swatch for a colour its main grid already
+  has (verified live in Sheets with `#000000` and `#ff0000`), and labels that
+  grid by name, not hex, so the dialog route applied such a colour and then
+  failed step 3 on every click. The match is on the painted colour of
+  `swatchInner` (inline `background-color: rgb(...)`, verified live in Sheets
+  and Docs; identical in every language). It runs only on the shared widget:
+  the dropdown-chip picker's cells are text-and-background pairs.
+
 ### Step 3 is a confirmation, not the apply (2026-09-01)
 
 The apply sequence above was built when the Sheets custom-colour dialog's OK

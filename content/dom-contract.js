@@ -23,7 +23,7 @@
  * @typedef {{
  *   customColorButton: string, customDialog: string, okButton: string,
  *   tab: string | null, tabSelected: string | null, tabIndex: number,
- *   appliesOnOk: boolean
+ *   appliesOnOk: boolean, isShared: boolean
  * }} CustomColorSpec  one custom-colour widget, as declared by the contract
  * @typedef {CustomColorSpec & { button: HTMLElement }} CustomColorVariant
  *   a CustomColorSpec bound to the entry-point button that is open right now.
@@ -41,6 +41,9 @@
  *   apps: Record<App, { pickers: Record<string, PickerSelectors> }>
  * }} Contract
  */
+
+import { normalizeHex, cssColorToHex } from "../lib/hex.js";
+import { MARK } from "./marks.js";
 
 /** @type {Contract | null} */
 let active = null;
@@ -156,6 +159,7 @@ function customColorVariants() {
     tabSelected: /** @type {string | null} */ (null),
     tabIndex: -1,
     appliesOnOk: false,
+    isShared: true,
   };
   /** @type {CustomColorSpec[]} */
   const out = [];
@@ -173,6 +177,7 @@ function customColorVariants() {
         // The flag lives on the PICKER, not the overrides block: it is a fact
         // about the widget's apply behaviour, not a selector.
         appliesOnOk: /** @type {any} */ (picker).appliesOnOk === true,
+        isShared: false,
       });
     }
   }
@@ -203,6 +208,19 @@ export function findCustomColorEntry(root) {
 /** @param {CustomColorVariant | null | undefined} variant @returns {boolean} */
 export function variantAppliesOnOk(variant) {
   return variant?.appliesOnOk === true;
+}
+
+/**
+ * Is this the SHARED custom-colour widget (the toolbar pickers), as opposed to
+ * a picker that declares its own `overrides`? Only the shared widget's palette
+ * is known to be a grid of plain single colours; an override picker may reuse
+ * the markup for something else (the Sheets dropdown chip's cells are
+ * text-and-background PAIRS), so "click the built-in cell of this colour" is
+ * only a safe shortcut on the shared one.
+ * @param {CustomColorVariant | null | undefined} variant @returns {boolean}
+ */
+export function variantIsShared(variant) {
+  return variant?.isShared === true;
 }
 
 /**
@@ -294,7 +312,14 @@ export function findSwatchCells(root) {
  * @returns {HTMLElement[]}
  */
 export function findMainSwatchCells(root) {
-  const cells = findSwatchCells(root);
+  return largestGrid(findSwatchCells(root));
+}
+
+/**
+ * The cells of the biggest grid among `cells` (see findMainSwatchCells).
+ * @param {HTMLElement[]} cells @returns {HTMLElement[]}
+ */
+function largestGrid(cells) {
   if (cells.length === 0) return [];
   /** @type {Map<Element, HTMLElement[]>} */
   const byGrid = new Map();
@@ -474,8 +499,58 @@ export function findToolbarButton(app, pickerType, root) {
 export function findSwatchByHex(root, hex) {
   const needle = hex.toLowerCase();
   return findSwatchCells(root).find(
-    (c) => c.getClientRects().length > 0 && (c.getAttribute("aria-label") ?? "").toLowerCase().includes(needle),
+    (c) => laidOut(c) && !isOwnCell(c) && (c.getAttribute("aria-label") ?? "").toLowerCase().includes(needle),
   ) ?? null;
+}
+
+/**
+ * Is `cell` one of OUR injected Brand cells rather than one of Google's? A
+ * Brand cell is a clone of a palette cell, so it satisfies `swatchCell`, and
+ * its aria-label is "Brand: <the user's name for it>". A swatch NAMED by its
+ * hex (which is what importing a bare `#1A73E8` line produces) therefore
+ * matched findSwatchByHex, and apply-color "applied" the colour by clicking the
+ * very cell the user had just clicked, which re-entered apply until the stack
+ * overflowed: no colour, and no banner either, since an error thrown inside
+ * an event listener never rejects applyColor (bd `workspace-custom-palette-ox4`,
+ * seen live on 0.2.2).
+ * @param {Element} cell @returns {boolean}
+ */
+function isOwnCell(cell) {
+  return !!cell.closest(`[${MARK}]`);
+}
+
+/**
+ * A VISIBLE cell of Google's own MAIN palette grid whose swatch is painted
+ * exactly `hex`, or null.
+ *
+ * Why this exists: Google does not add a CUSTOM swatch for a colour its main
+ * grid already has (verified live in Sheets 2026-11-11 with #000000 and
+ * #ff0000). Such a colour can never be found by findSwatchByHex, because the
+ * grid's cells are labelled by NAME ("black", "red", and translated), not by
+ * hex. So a brand colour equal to a built-in went through the dialog on every
+ * click and then failed its confirmation, bannering a colour that had applied.
+ * Clicking the built-in cell is what a user would do by hand, and a swatch
+ * click is not isTrusted-gated.
+ *
+ * Matched on the painted colour, never on the label: the colour is identical
+ * in every UI language. Limited to the main (largest) grid so a theme-linked
+ * cell is never chosen over the plain colour, and to laid-out cells so a hidden
+ * cached picker is ignored. Our own Brand cells are excluded: they are painted
+ * the brand colour by definition.
+ * @param {ParentNode} root @param {string} hex
+ * @returns {HTMLElement | null}
+ */
+export function findBuiltinSwatchByColor(root, hex) {
+  const want = normalizeHex(hex);
+  if (!want) return null;
+  const innerSel = shared().swatchInner;
+  const grid = largestGrid(findSwatchCells(root).filter((c) => laidOut(c) && !isOwnCell(c)));
+  return grid.find((c) => {
+    const inner = c.querySelector(innerSel);
+    const view = inner?.ownerDocument?.defaultView;
+    if (!inner || !view) return false;
+    return cssColorToHex(view.getComputedStyle(inner).backgroundColor) === want;
+  }) ?? null;
 }
 
 /**

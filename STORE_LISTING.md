@@ -52,6 +52,7 @@ FOR ORGANIZATIONS AND IT ADMINS
 - Publish several named palettes if you have sub brands, and let people switch between them.
 - Choose whether staff can change them. Enforced colors are what everyone starts on and cannot be edited, so the brand stays the brand.
 - Nothing anyone made is ever deleted. Personal palettes stay in the account throughout, and come straight back if the policy is removed.
+- Step by step admin setup: https://raylytics.io/custom-color-palette/admin
 
 KEEP MORE THAN ONE PALETTE
 
