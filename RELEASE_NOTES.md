@@ -2,6 +2,14 @@
 
 What changed for you, in plain terms. For the engineering log see CHANGELOG.md.
 
+## 0.2.5
+
+### Fixed
+
+A palette with more than ten colors no longer runs off the edge of the color
+picker in Slides, where the last colors were cut off behind a scrollbar. Brand
+colors now wrap onto a second row after ten, in Docs, Sheets and Slides alike.
+
 ## 0.2.4
 
 ### Changed
@@ -14,6 +22,8 @@ organization's palette is on screen: the imported colors go into a palette of
 your own.
 
 ## 0.2.3
+
+Not published on its own. These fixes were released as part of 0.2.4.
 
 ### Fixed
 

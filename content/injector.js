@@ -46,8 +46,24 @@ export function injectBrandRow(pickerRoot, palette, doc = document) {
   // <tr> when we actually have a table row to mount it into. Otherwise a <tr>
   // could land in a non-table parent and never render.
   const sampleRow = sample.closest("tr");
-  const row = doc.createElement(sampleRow?.parentElement ? "tr" : "div");
-  row.setAttribute(MARK, "1");
+  const isTable = !!sampleRow?.parentElement;
+  // A table palette is as wide as Google's own rows (ten cells). One <tr>
+  // holding every Brand swatch made the table wider than that as soon as the
+  // palette had more: Sheets and Docs let the menu grow, but the Slides fill
+  // menu has a fixed width, so the eleventh and twelfth swatches were clipped
+  // behind a horizontal scrollbar (bd workspace-custom-palette-8j9, found with
+  // a 12-colour field palette, 2026-11-12). So wrap at Google's column count:
+  // every Brand row carries MARK, and a palette that fits keeps its one row.
+  const perRow = isTable ? Math.max(1, sampleRow?.children.length ?? 0) : Infinity;
+  /** @type {HTMLElement[]} */
+  const rows = [];
+  const newRow = () => {
+    const el = doc.createElement(isTable ? "tr" : "div");
+    el.setAttribute(MARK, "1");
+    rows.push(el);
+    return el;
+  };
+  let row = newRow();
 
   const ordered = [...palette].sort((a, b) => a.order - b.order);
   for (const sw of ordered) {
@@ -107,6 +123,7 @@ export function injectBrandRow(pickerRoot, palette, doc = document) {
     const isActivate = (/** @type {KeyboardEvent} */ e) => e.key === "Enter" || e.key === " " || e.key === "Spacebar";
     cell.addEventListener("keydown", (e) => { const k = /** @type {KeyboardEvent} */ (e); if (isActivate(k) && !k.repeat) { swallow(e); apply(); } }, true);
     cell.addEventListener("keyup", (e) => { if (isActivate(/** @type {KeyboardEvent} */ (e))) swallow(e); }, true);
+    if (row.children.length >= perRow) row = newRow();
     row.appendChild(cell);
   }
 
@@ -145,9 +162,9 @@ export function injectBrandRow(pickerRoot, palette, doc = document) {
   // chosen above matches this branch so a <tr> always lands in a table section.
   if (sampleRow?.parentElement) {
     if (labelRow) sampleRow.parentElement.appendChild(labelRow); // header above the swatches
-    sampleRow.parentElement.appendChild(row); // table palette: new <tr> in the same tbody
+    for (const r of rows) sampleRow.parentElement.appendChild(r); // table palette: new <tr>s in the same tbody
   } else {
-    (grid.parentElement ?? grid).appendChild(row); // div palette: into the grid container
+    for (const r of rows) (grid.parentElement ?? grid).appendChild(r); // div palette: into the grid container
   }
   return true;
 }

@@ -93,6 +93,35 @@ test("injectBrandRow: idempotent — second call is a no-op, still one row", () 
   assert.equal(menu.querySelectorAll(`[${MARK}]`).length, 1);
 });
 
+test("injectBrandRow: a palette wider than Google's grid wraps into more rows", () => {
+  // One <tr> with every swatch made the table wider than Google's rows; the
+  // Slides fill menu has a fixed width, so swatches past the tenth were
+  // clipped behind a scrollbar (bd workspace-custom-palette-8j9). The fixture
+  // grid is two cells wide, so five swatches must land as 2 + 2 + 1.
+  loadContract(contract);
+  const { doc, menu, tbody } = makePicker();
+  const five = ["#111111", "#222222", "#333333", "#444444", "#555555"]
+    .map((hex, i) => ({ name: `C${i}`, hex, order: i }));
+  assert.equal(injectBrandRow(menu, five, doc), true);
+
+  const rows = [...menu.querySelectorAll(`[${MARK}]`)];
+  assert.deepEqual(rows.map((r) => r.children.length), [2, 2, 1], "no row is wider than the grid");
+  assert.ok(rows.every((r) => r.tagName === "TR" && r.parentElement === tbody));
+  assert.deepEqual(
+    rows.flatMap((r) => [...r.children].map((c) => c.getAttribute("aria-label"))),
+    ["Brand: C0", "Brand: C1", "Brand: C2", "Brand: C3", "Brand: C4"],
+    "reading order is palette order",
+  );
+  // The rows are consecutive, so nothing of Google's sits between them.
+  assert.equal(rows[0]?.nextElementSibling, rows[1]);
+  assert.equal(rows[1]?.nextElementSibling, rows[2]);
+  // Still one injection as far as idempotency and removal are concerned.
+  assert.equal(injectBrandRow(menu, five, doc), false);
+  assert.equal(menu.querySelectorAll(`[${MARK}]`).length, 3);
+  refreshBrandRows(() => [], doc);
+  assert.equal(menu.querySelectorAll(`[${MARK}]`).length, 0, "every wrapped row is removed");
+});
+
 test("injectBrandRow: empty palette injects nothing and leaves no mark", () => {
   loadContract(contract);
   const { doc, menu } = makePicker();

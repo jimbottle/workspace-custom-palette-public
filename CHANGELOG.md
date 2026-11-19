@@ -3,6 +3,34 @@
 All notable changes to Custom Color Palette for Google Workspace Docs, Sheets & Slides. Format: [Keep a Changelog];
 this project follows [Semantic Versioning]. Audience: maintainers.
 
+## [0.2.5] — 2026-11-12
+
+### Fixed
+
+- **A palette with more than ten colors no longer overflows the Slides fill
+  picker** (bd `workspace-custom-palette-8j9`; found 2026-11-12 with a
+  12-color field palette). `injectBrandRow` in `content/injector.js` put
+  every swatch in one `<tr>`, which made the palette table wider than
+  Google's ten-cell rows. Sheets and Docs let the menu grow, but the Slides
+  fill menu has a fixed width (table 265px in a 241px `goog-menu`,
+  `overflow-x: auto`), so the last swatches were clipped behind a horizontal
+  scrollbar. The Brand swatches now wrap at the sample row's cell count:
+  eleven to twenty colors make two rows, more make three, each `<tr>`
+  carrying `MARK`, mounted consecutively under the one "Brand" label. A
+  palette of ten or fewer is unchanged, as is a div palette (no table row to
+  measure). This also changes Sheets and Docs for palettes over ten, from
+  one wide row to wrapped rows. Nothing else assumed a single row:
+  idempotency, removal (`refreshBrandRows`) and `isOwnCell` all match on
+  `MARK`. Test: one new case in `content/__tests__/dom-harness.test.js`.
+  `manifest.json` and `package.json` move to 0.2.5.
+
+### Changed
+
+- **0.2.3 is marked as never published.** It was tagged and built on
+  2026-11-12 but not uploaded to the Chrome Web Store; its fixes reached
+  users in 0.2.4. Noted under its heading here and in `RELEASE_NOTES.md`,
+  and on the `v0.2.3` GitHub Release. The tag stays: tags are not rewritten.
+
 ## [0.2.4] — 2026-11-12
 
 ### Changed
@@ -35,6 +63,9 @@ this project follows [Semantic Versioning]. Audience: maintainers.
   in a real Chromium. `manifest.json` and `package.json` move to 0.2.4.
 
 ## [0.2.3] — 2026-11-12
+
+Tagged and built, never uploaded to the Chrome Web Store. Store users received
+these changes in 0.2.4.
 
 ### Fixed
 
