@@ -108,6 +108,9 @@
     font-size: 12.5px; margin: 0;
   }
   .note { color: var(--muted); font-size: 13px; margin-top: 8px; }
+  #guide-line { margin-bottom: 6px; }
+  #guide { color: var(--accent); text-decoration: none; font-weight: 600; }
+  #guide:hover { text-decoration: underline; }
   .warn { color: var(--warn); }
   footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 12px; }
 </style>
@@ -116,6 +119,13 @@
 <main>
   <h1 class="brandbar"><span class="brandmark" id="preview" role="img" aria-label="Preview of the brand colors"></span>Organization palette: policy builder</h1>
   <p class="preview-note" id="preview-note"></p>
+  <!-- First thing on the page: an admin who lands here cold needs the
+       walkthrough before the form. Same URL as #admin-guide on Settings. -->
+  <p class="sub" id="guide-line">
+    First time setting this up? Follow the
+    <a id="guide" href="https://raylytics.io/custom-color-palette/admin"
+       target="_blank" rel="noopener">step by step setup guide</a>.
+  </p>
   <p class="sub">
     Pick your brand colors here, copy the result, and paste it into the Google
     Admin console. Nothing is sent anywhere: this page runs entirely in your

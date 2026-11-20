@@ -3,6 +3,37 @@
 All notable changes to Custom Color Palette for Google Workspace Docs, Sheets & Slides. Format: [Keep a Changelog];
 this project follows [Semantic Versioning]. Audience: maintainers.
 
+## [0.2.6] — 2026-11-19
+
+### Added
+
+- **A setup-help line under the Administrators row on Settings** (owner
+  request, 2026-11-19). `options/options.html` gains `p#admin-help` after the
+  Administrators section: a link to the published administrator guide
+  (`#admin-guide`, https://raylytics.io/custom-color-palette/admin, the URL
+  already in `STORE_LISTING.md`) and a `mailto:` to the feedback inbox
+  (`#admin-contact`), with an offer of free help setting up an organization
+  palette. It is a sibling of the row, not a flex child, so it spans the page
+  under the row. Both are plain links: no script, no request until the admin
+  clicks. Tests: `options/__tests__/options-glue.test.js` pins the guide URL
+  and holds the address equal to `INBOX` in `shared/feedback-email.js`;
+  `dev/pages-smoke.mjs` checks the line is laid out under the row.
+- **The policy builder opens with a link to the same guide.**
+  `options/policy-builder.html` gains `p#guide-line` (`a#guide`) above the
+  intro paragraph, so an administrator who lands on the builder cold meets
+  the walkthrough before the form. It works when the builder is opened as a
+  file too, being a plain link. `options/__tests__/policy-builder.test.js`
+  holds its address equal to `#admin-guide` on Settings; `dev/pages-smoke.mjs`
+  checks it is visible above the form.
+
+### Changed
+
+- **`docs/ADMIN_GUIDE.md` offers setup help in general, not the builder as
+  files** (owner, 2026-11-19). Step 1 dropped the parenthetical about being
+  sent `policy-builder.html` and gained a line inviting administrators to
+  email for help, free, matching the new Settings line and the wording asked
+  of the site's admin page (bd `raylytics-site-nm9`).
+
 ## [0.2.5] — 2026-11-12
 
 ### Fixed

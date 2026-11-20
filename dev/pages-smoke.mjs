@@ -198,6 +198,25 @@ try {
     });
     check("admin row: the builder button is not wrapped",
       !wrapped.missing && wrapped.lines < 1.6, JSON.stringify(wrapped));
+
+    // The help line under the row: laid out, below the builder button, and
+    // both links visible. CSS-only again (a flex child would land beside the
+    // description instead of under the row).
+    const help = await page.evaluate(() => {
+      const p = document.getElementById("admin-help");
+      const b = document.getElementById("policy-builder");
+      const g = document.getElementById("admin-guide");
+      const c = document.getElementById("admin-contact");
+      if (!p || !b || !g || !c) return { missing: true };
+      const pr = p.getBoundingClientRect();
+      return {
+        below: pr.top >= b.getBoundingClientRect().bottom,
+        links: g.getClientRects().length > 0 && c.getClientRects().length > 0,
+        fits: pr.right <= document.documentElement.clientWidth,
+      };
+    });
+    check("admin row: the setup-help line sits under the row with both links",
+      !help.missing && help.below && help.links && help.fits, JSON.stringify(help));
   }
 
   // --- The policy builder, as an EXTENSION PAGE ------------------------------
@@ -231,6 +250,12 @@ try {
     // The builder links palette-editor.css too, but its own element-type
     // input rule is more specific than a bare class (roborev 5489).
     await checkCopyLayout(builder, "builder");
+    check("builder: the setup guide link is visible above the form",
+      await builder.evaluate(() => {
+        const g = document.getElementById("guide"), f = document.querySelector("fieldset");
+        return !!g && !!f && g.getClientRects().length > 0
+          && g.getBoundingClientRect().bottom <= f.getBoundingClientRect().top;
+      }));
     check("builder: it produced a policy payload",
       (await builder.locator("#out").innerText()).includes("paletteLocked"),
       "enforcement is ticked by default, so the key should be there");

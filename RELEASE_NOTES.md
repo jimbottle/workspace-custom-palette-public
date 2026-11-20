@@ -2,6 +2,14 @@
 
 What changed for you, in plain terms. For the engineering log see CHANGELOG.md.
 
+## 0.2.6
+
+### Added
+
+Administrators setting up an organization palette now have a link to the step
+by step setup guide on the Settings page, and an address to write to for help.
+Setup help is free. The policy builder links the same guide at the top.
+
 ## 0.2.5
 
 ### Fixed

@@ -256,6 +256,22 @@ test("policy-builder: several palettes preview the FIRST, and say so", () => {
 // a passing build would ever report the damage. roborev 4224 noted the
 // restructuring below had no test at all.
 
+test("policy-builder: the setup guide is linked before anything else on the page", () => {
+  // Owner, 2026-11-19. The same address Settings links (#admin-guide), so the
+  // two cannot drift to different guides.
+  const { doc } = open();
+  const guide = doc.getElementById("guide");
+  assert.ok(guide, "the guide link exists");
+  const settings = readFileSync(new URL("../options.html", import.meta.url), "utf8");
+  const href = guide.getAttribute("href") ?? "";
+  assert.equal(href, "https://raylytics.io/custom-color-palette/admin");
+  assert.ok(settings.includes(`id="admin-guide" href="${href}"`), "Settings links the same guide");
+  assert.equal(guide.getAttribute("target"), "_blank");
+  assert.match(guide.getAttribute("rel") ?? "", /noopener/);
+  const fieldset = doc.querySelector("fieldset");
+  assert.ok(fieldset && (guide.compareDocumentPosition(fieldset) & 4) !== 0, "it comes before the form");
+});
+
 test("policy-builder: the Web Store steps stay broken out, not folded back into prose", () => {
   // Owner, 2026-08-27: adding the extension is four discrete console actions
   // and read as a five-sentence paragraph. They are sub-bullets now. A later

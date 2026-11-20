@@ -121,8 +121,11 @@
         margin-top: var(--space-6); padding-top: var(--space-4);
         border-top: 1px solid var(--border); color: var(--muted);
       }
-      footer a { color: var(--accent-text); text-decoration: none; }
-      footer a:hover { text-decoration: underline; }
+      footer a, .admin-help a { color: var(--accent-text); text-decoration: none; }
+      footer a:hover, .admin-help a:hover { text-decoration: underline; }
+      /* The line under the Administrators row. It sits outside the flex row so
+         it spans the page width instead of squeezing into the description. */
+      p.admin-help { color: var(--muted); margin: var(--space-3) 0 0; }
     </style>
   </head>
   <body>
@@ -246,6 +249,15 @@
         to paste into the Google Admin console. You need to be an administrator.
       </span>
     </section>
+    <!-- The guide is the published copy of docs/ADMIN_GUIDE.md; the address is
+         INBOX in shared/feedback-email.js (a test holds the two together). -->
+    <p class="admin-help" id="admin-help">
+      Interested but not sure where to start? Follow the
+      <a id="admin-guide" href="https://raylytics.io/custom-color-palette/admin"
+         target="_blank" rel="noopener">step by step setup guide</a>, or email
+      <a id="admin-contact" href="mailto:dev@raylytics.io">dev@raylytics.io</a>.
+      I'm happy to help set up an organization palette at no cost.
+    </p>
 
     <footer>
       <!-- No whitespace between these: the separators are the only spacing, so

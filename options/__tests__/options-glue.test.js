@@ -615,6 +615,22 @@ test("options: an open preview follows a palette switch, but never a pasted list
   }
 });
 
+test("options: the Administrators row offers the setup guide and help by email", async () => {
+  const { INBOX } = await import("../../shared/feedback-email.js");
+  const page = await mountOptions({ mode: "absent" });
+  try {
+    const guide = page.byId("admin-guide");
+    assert.equal(guide.getAttribute("href"), "https://raylytics.io/custom-color-palette/admin");
+    assert.equal(guide.getAttribute("target"), "_blank");
+    assert.match(guide.getAttribute("rel") ?? "", /noopener/);
+    assert.equal(page.byId("admin-contact").getAttribute("href"), `mailto:${INBOX}`);
+    assert.equal(page.byId("admin-contact").textContent, INBOX);
+    assert.equal(page.byId("admin-help").textContent.includes("\u2014"), false, "no em-dash in shipped copy");
+  } finally {
+    page.unmount();
+  }
+});
+
 test("no shipped file branches on HOW the extension was installed", async () => {
   // Force install and Allow install must be indistinguishable to this
   // extension. The managed payload is delivered per extension ID, not per

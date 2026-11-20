@@ -37,9 +37,11 @@ You do this in two steps:
 
 Open the policy builder. If you have the extension installed, open its
 Settings page, scroll to **Administrators**, and click **Build organization
-palette**. The builder opens in a new tab. (If someone sent you the builder as
-files instead, open `policy-builder.html`; it works the same way and needs no
-internet connection.)
+palette**. The builder opens in a new tab.
+
+Not sure where to start, or not installing the extension yourself? Email
+dev@raylytics.io and we will help you set up your organization palette. Setup
+help is free.
 
 In the builder:
 
